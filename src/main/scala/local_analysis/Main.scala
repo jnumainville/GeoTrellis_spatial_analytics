@@ -74,19 +74,17 @@ object RasterAnalytics {
 
 
 
-
-
   def main(args: Array[String]): Unit = {
 
     class rasterDataset(val name: String, val thePath: String, var pixelValue: Int, var newPixel: Int)
 
     val rasterDatasets = List(
-      new rasterDataset("glc", "/data/projects/G-818404/glc2000_clipped.tif", 16, 1),
-      new rasterDataset("meris", "/data/projects/G-818404/meris_2010_clipped.tif", 100, 1)
-      // new rasterDataset("nlcd", "/data/projects/G-818404/nlcd_2006.tif", 21, 1)
+      // new rasterDataset("glc", "/data/projects/G-818404/glc2000_clipped.tif", 16, 1),
+      // new rasterDataset("meris", "/data/projects/G-818404/meris_2010_clipped.tif", 100, 1)
+      new rasterDataset("nlcd", "/data/projects/G-818404/nlcd_2006.tif", 21, 1)
     )
 
-    val outCSVPath = "/home/04489/dhaynes/geotrellis_reclassify_4_6_2018_12instances.csv"
+    val outCSVPath = "/home/04489/dhaynes/geotrellis_reclassify_4_10_2018_12instances.csv"
     val writer = new PrintWriter(new File(outCSVPath))
     writer.write("analytic, dataset, tilesize, pixlecount, time, run\n")
     //Call Reclass Pixel Function (add one to specified value)
@@ -99,7 +97,7 @@ object RasterAnalytics {
     val sc = new SparkContext(conf)
     for(r <- rasterDatasets) {
       val rasterRDD: RDD[(ProjectedExtent, geotrellis.raster.Tile)] = sc.hadoopGeoTiffRDD(r.thePath)
-      val geoTiff: SinglebandGeoTiff = SinglebandGeoTiff(r.thePath)
+      val geoTiff: SinglebandGeoTiff = SinglebandGeoTiff(r.thePath, decompress = false, streaming = true)
       val rasterArray: geotrellis.raster.Tile = geoTiff.tile
 
       for (x <- 1 to 3){
@@ -114,16 +112,16 @@ object RasterAnalytics {
           // println( "Using Spark: found pixleValue " + r.pixelValue + " occurences: " + countPixelsSpark(r.pixelValue, tiledRaster) )
           var countPixelStop = System.currentTimeMillis
           val analyticTime = countPixelStop - countPixelStart
-          //println(s"Milliseconds: ${countPixelStop - countPixelStart}")
+          println(s"Milliseconds: ${countPixelStop - countPixelStart}")
           var datasetName : String = r.name
 
-          //writer.write(s"pixlecount, $datasetName, $tilesize, $numPixels, $analyticTime, $x\n")
+          writer.write(s"pixlecount, $datasetName, $tilesize, $numPixels, $analyticTime, $x\n")
 
           var reclassPixelStart = System.currentTimeMillis
           val theReclassValue = r.newPixel
           var equalpixelvalue: MyType = (x: Int) => x == theReclassValue
           var reclassedRaster = tiledRaster.localIf(equalpixelvalue, r.newPixel, -999)
-          //var numReclassPixels = countPixelsSpark(r.newPixel, reclassedRaster)
+          var numReclassPixels = countPixelsSpark(r.newPixel, reclassedRaster)
           var reclassPixelStop = System.currentTimeMillis
           val reclassTime = reclassPixelStop - reclassPixelStart
 
