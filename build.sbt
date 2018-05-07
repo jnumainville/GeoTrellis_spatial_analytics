@@ -29,10 +29,12 @@ resolvers ++= Seq(
   "locationtech-snapshots" at "https://repo.locationtech.org/content/groups/snapshots",
   "org.apache.spark" at "https://mvnrepository.com/artifact/org.apache.spark/spark-core"
 )*/
+val SparkVersion = "2.2.1"
 
 libraryDependencies ++= Seq(
   "org.locationtech.geotrellis" %% "geotrellis-spark" % "1.2.0-RC2",
-  "org.apache.spark"      %% "spark-core"       % "2.2.0" % Provided,
+  "org.apache.spark" %% "spark-core" % "2.2.1" % "compile",
+  //"org.apache.spark"      %% "spark-core"       % "2.2.0" % Provided
   "org.scalatest"         %%  "scalatest"       % "2.2.0" % Test
 )
 

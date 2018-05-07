@@ -42,10 +42,6 @@ import org.apache.spark.rdd._
 import org.apache.spark.HashPartitioner
 import org.apache.spark.rdd.RDD
 
-//hadoop config libraries
-import org.apache.hadoop.fs.Path
-import org.apache.hadoop.conf.Configuration
-
 //Libraries for reading a json
 import spray.json._
 import spray.json.DefaultJsonProtocol._
@@ -55,7 +51,7 @@ import java.io.File
 import java.io._
 //File Object
 
-object RDDCount {
+object CountGeoTiff {
   //Class for testing raster analytics
 
   def countPixels(a:Int, b:geotrellis.raster.Tile) : Int = {
@@ -73,18 +69,18 @@ object RDDCount {
   }
 
   def countRaster(theRaster:org.apache.spark.rdd.RDD[(geotrellis.spark.SpatialKey, geotrellis.raster.Tile)], oldValue:Int) : Double = {
-    
+
     var countPixelStart = System.currentTimeMillis()
-    var thePixels = countPixelsSpark(oldValue, theRaster)
+    var numPixels = countPixelsSpark(oldValue, theRaster)
     var countPixelStop = System.currentTimeMillis()
-    val theTime = countPixelStop - countPixelStart
-    println(s"Milliseconds: ${countPixelStop - countPixelStart}")
-    thePixels
-    }  
+    val analyticTime = countPixelStop - countPixelStart
+    //println(s"Milliseconds: ${countPixelStop - countPixelStart}")
+    analyticTime
+  }
 
   def reclassifyRaster(theRaster:org.apache.spark.rdd.RDD[(geotrellis.spark.SpatialKey, geotrellis.raster.Tile)], oldValue:Int, newValue:Int) : Double = {
     //Function for reclassifying raster
-    
+
     //Type for evaluation statement
     type MyType = Int => Boolean
     var equalpixelvalue: MyType = (x: Int) => x == oldValue
@@ -97,71 +93,82 @@ object RDDCount {
     val reclassTime = reclassPixelStop - reclassPixelStart
     reclassTime
   }
-//"file://" + new File("data/r-g-nir.tif").getAbsolutePath
-  val inputPath = "file://" + new File("/home/david/Downloads/glc2000.tif").getAbsolutePath
+
+  //tiledRaster.
+
+  /*  val rasterCount = tiledRaster.mapValues { tile =>
+      tile.foreach { z =>
+        if (z==12) PixelCount +=1
+      }
+    }*/
+
 
   def main(args: Array[String]): Unit = {
+
+    class rasterDataset(val name: String, val thePath: String, var pixelValue: Int, var newPixel: Int)
+
+    val rasterDatasets = List(
+      new rasterDataset("glc", "/home/david/Downloads/glc2000.tif", 16, 1)
+      /*
+      new rasterDataset("glc", "/data/projects/G-818404/glc2000_clipped.tif", 16, 1),
+      new rasterDataset("meris", "/data/projects/G-818404/meris_2010_clipped.tif", 100, 1),
+      new rasterDataset("nlcd", "/data/projects/G-818404/nlcd_2006.tif", 21, 1)
+      new rasterDataset("meris_3m", "/data/projects/G-818404/meris_2010_clipped_3m.tif", 100, 1)
+      */
+    )
+
+    val outCSVPath = "/home/david/test.csv" //"/home/04489/dhaynes/geotrellis_all_4_12_2018_12instances.csv"
+    //val writer = new PrintWriter(new File(outCSVPath))
+    //writer.write("analytic,dataset,tilesize,time,run\n")
     //Call Reclass Pixel Function (add one to specified value)
     //reclassPixels(pixel,rasterArray);
 
+    val tilesizes = Array(25, 50, 100) //, 200, 300, 400, 500, 600, 700, 800, 900, 1000) //, 1500, 2000, 2500, 3000, 3500, 4000)
+    //Using Spark
 
     val conf = new SparkConf().setMaster("local[2]").setAppName("Spark Tiler").set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").set("spark.kryo.regisintrator", "geotrellis.spark.io.kryo.KryoRegistrator")//.set("spark.driver.memory", "2g").set("spark.executor.memory", "1g")
     val sc = new SparkContext(conf)
+    for(r <- rasterDatasets) {
+      // val rasterRDD: RDD[(ProjectedExtent, geotrellis.raster.Tile)] = sc.hadoopGeoTiffRDD(r.thePath)
+      val geoTiff: SinglebandGeoTiff = SinglebandGeoTiff(r.thePath, decompress = false, streaming = true)
 
-    try {
-      run(sc)
-      // Pause to wait to close the spark context,
-      // so that you can check out the UI at http://localhost:4040
-      println("Hit enter to exit.")
-      StdIn.readLine()
-    } finally {
-      sc.stop()
-    }
-  }
+      val pValue = r.pixelValue
+      var analyticTime: Double = 0
 
+      analyticTime = countPixels(pValue, geoTiff.tile)
+      println(analyticTime)
 
-    def run(implicit sc: SparkContext) = {
-      // Read the geotiff in as a single image RDD,
-      // using a method implicitly added to SparkContext by
-      // an implicit class available via the
-      // "import geotrellis.spark.io.hadoop._ " statement.
-      // val inputRdd: RDD[(ProjectedExtent, Tile)] = sc.hadoopGeoTiffRDD(inputPath)
-
-      class rasterDataset(val name: String, val thePath: String, var pixelValue: Int, var newPixel: Int)
-      val tilesizes = Array(25, 50, 100) //, 200, 300, 400, 500, 600, 700, 800, 900, 1000) //, 1500, 2000, 2500, 3000, 3500, 4000)
-
-      val rasterDatasets = List(
-        new rasterDataset("glc", "/home/david/Downloads/glc2000_clipped.tif", 16, 1),
-        new rasterDataset("meris", "/home/david/Downloads/meris_2010.tif", 100, 1)
-        //new rasterDataset("nlcd", "/data/projects/G-818404/nlcd_2006.tif", 21, 1),
-        //new rasterDataset("meris_3m", "/data/projects/G-818404/meris_2010_clipped_3m.tif", 100, 1)
-      )
-
-      val outCSVPath = "/home/david/Downloads/test.csv" //"/home/04489/dhaynes/geotrellis_all_4_12_2018_12instances.csv"
-      val writer = new PrintWriter("file://" + new File(outCSVPath).getAbsolutePath)
-      writer.write("analytic,dataset,tilesize,time,run\n")
-
-      for(r <- rasterDatasets) {
-
-        val inputPath = "file://" + new File(r.thePath).getAbsolutePath
-        val rasterRDD: RDD[(ProjectedExtent, geotrellis.raster.Tile)] = sc.hadoopGeoTiffRDD(inputPath)
-        val geoTiff: SinglebandGeoTiff = SinglebandGeoTiff(r.thePath, decompress = false, streaming = true)
-        val rasterArray: geotrellis.raster.Tile = geoTiff.tile
+      /*for (x <- 1 to 1){
 
         for (tilesize <- tilesizes) {
           val ld = LayoutDefinition(geoTiff.rasterExtent, tilesize)
-          val tiledRaster: RDD[(SpatialKey, geotrellis.raster.Tile)] = rasterRDD.tileToLayout(geoTiff.cellType, ld)
-          var datasetName: String = r.name
+          val tiledRaster: RDD[(SpatialKey,geotrellis.raster.Tile)] = rasterRDD.tileToLayout(geoTiff.cellType, ld)
+          var datasetName : String = r.name
 
           //Call Spark Function to count pixels
-          val numPixels = countRaster(tiledRaster, r.pixelValue)
 
-          writer.write(s"pixlecount,$datasetName,$tilesize,$numPixels,analyticTime,x\n")
+          //analyticTime = countRaster(tiledRaster, pValue)
+          //writer.write(s"pixlecount,$datasetName,$tilesize,$analyticTime,$x\n")
+
+          //analyticTime = reclassifyRaster(tiledRaster, r.pixelValue, r.newPixel)
+          //writer.write(s"reclassify,$datasetName,$tilesize,$analyticTime,$x\n")
+
+          tiledRaster.unpersist()
         }
-      }
-      writer.close()
+
+      }*/
 
     }
-  //val geoTiffRDD = HadoopGeoTiffRDD.spatial(new Path(localGeoTiffPath))
+    //writer.close()
+    sc.stop()
+  }
 
 }
+
+
+
+
+
+
+
+
