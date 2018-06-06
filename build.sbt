@@ -1,5 +1,5 @@
 // Rename this as you see fit
-name := "geotrellis-sbt-template"
+name := "Raster Analytics"
 
 version := "0.2.0"
 
