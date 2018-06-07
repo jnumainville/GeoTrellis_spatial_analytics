@@ -1,7 +1,7 @@
 package local_analysis
 
 import geotrellis.raster._
-import geotrellis.spark._
+import geotrellis.spark.TileLayerMetadata
 import scala.io.StdIn.{readLine,readInt}
 import geotrellis.raster.io.geotiff.reader.GeoTiffReader
 //Has TileLayout Object, MultibandTile
@@ -49,6 +49,9 @@ import spray.json.DefaultJsonProtocol._
 import scala.io.StdIn
 import java.io.File
 import java.io._
+import local_analysis.rasterdatasets.myRaster
+import org.apache.hadoop.fs.Path
+
 //File Object
 // extends java.io.Serializable
 object raster{
@@ -149,10 +152,14 @@ object CountGeoTiff{
 
   def main(args: Array[String]): Unit = {
     //var raster = CountGeoTiff("glc", "/home/david/Downloads/glc2000.tif", 16, 1)
+    val theRaster = new myRaster("glc", "/home/david/Downloads/glc2000.tif", 16, 1)
+    //val theValues = CountGeoTiff.this.info("glc", "/home/david/Downloads/glc2000.tif", 16, 1)
+    println(theRaster)
+    //val raster_path = new Path(theRaster.thePath)
 
-    val theValues = CountGeoTiff.this.info("glc", "/home/david/Downloads/glc2000.tif", 16, 1)
-    println(raster.the_path)
-    val raster_path = raster.the_path
+
+
+
     //raster.AddData()
     //raster.AddData("glc", "/home/david/Downloads/glc2000.tif", 16, 1)
 
@@ -178,9 +185,9 @@ object CountGeoTiff{
     val conf = new SparkConf().setMaster("local[2]").setAppName("Spark Tiler").set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").set("spark.kryo.regisintrator", "geotrellis.spark.io.kryo.KryoRegistrator").set("spark.driver.memory", "2g").set("spark.executor.memory", "1g")
     val sc = new SparkContext(conf)
 
-
-      val rasterRDD: RDD[(ProjectedExtent, geotrellis.raster.Tile)] = sc.hadoopGeoTiffRDD(raster_path)
-      val geoTiff: SinglebandGeoTiff = GeoTiffReader.readSingleband(theValues._2, decompress = false, streaming = true)
+    //val geoTiffRDD: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(theRaster.thePath, HadoopGeoTiffRDD.Options.DEFAULT)
+      //val rasterRDD: RDD[(ProjectedExtent, geotrellis.raster.Tile)] = sc.hadoopGeoTiffRDD(raster_path)
+/*      val geoTiff: SinglebandGeoTiff = GeoTiffReader.readSingleband(theValues._2, decompress = false, streaming = true)
 
       //val geoTiff: SinglebandGeoTiff = SinglebandGeoTiff(r.thePath, decompress = false, streaming = true)
 
@@ -189,7 +196,7 @@ object CountGeoTiff{
       val ld = LayoutDefinition(geoTiff.rasterExtent, 50)
       val tiledRaster: RDD[(SpatialKey,geotrellis.raster.Tile)] = rasterRDD.tileToLayout(geoTiff.cellType, ld)
 
-      val (analyticTime: Double, numPixels: Int) = countPixelsSpark(pValue, tiledRaster)
+      val (analyticTime: Double, numPixels: Int) = countPixelsSpark(pValue, tiledRaster)*/
       // println(analyticTime)
 
     /*for (x <- 1 to 1){
