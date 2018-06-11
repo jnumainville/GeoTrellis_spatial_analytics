@@ -31,6 +31,10 @@ resolvers ++= Seq(
 )*/
 val SparkVersion = "2.2.1"
 
+fork in run := true
+outputStrategy in run := Some(StdoutOutput)
+connectInput in run := true
+
 libraryDependencies ++= Seq(
   "org.locationtech.geotrellis" %% "geotrellis-spark" % "1.2.0-RC2",
   "org.apache.spark" %% "spark-core" % "2.2.1" % "compile",
