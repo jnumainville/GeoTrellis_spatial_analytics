@@ -152,7 +152,7 @@ object CountGeoTiff{
 
   def main(args: Array[String]): Unit = {
     //var raster = CountGeoTiff("glc", "/home/david/Downloads/glc2000.tif", 16, 1)
-    val theRaster = new myRaster("glc", "/home/david/Downloads/glc2000.tif", 16, 1)
+    val theRaster = new myRaster("glc", "/data/projects/G-818404/glc2000_clipped.tif", 16, 1)
     //val theValues = CountGeoTiff.this.info("glc", "/home/david/Downloads/glc2000.tif", 16, 1)
     println(theRaster)
     //val raster_path = new Path(theRaster.thePath)
@@ -164,16 +164,15 @@ object CountGeoTiff{
     //raster.AddData("glc", "/home/david/Downloads/glc2000.tif", 16, 1)
 
     /*val rasterDatasets = List(
-      new rasterDataset("glc", "/home/david/Downloads/glc2000.tif", 16, 1)
-      /*
+      new rasterDataset("glc", "/home/david/Downloads/glc2000.tif", 16, 1),
       new rasterDataset("glc", "/data/projects/G-818404/glc2000_clipped.tif", 16, 1),
       new rasterDataset("meris", "/data/projects/G-818404/meris_2010_clipped.tif", 100, 1),
       new rasterDataset("nlcd", "/data/projects/G-818404/nlcd_2006.tif", 21, 1)
       new rasterDataset("meris_3m", "/data/projects/G-818404/meris_2010_clipped_3m.tif", 100, 1)
-      */
-    )*/
+      )
+    */
 
-    val outCSVPath = "/home/david/test.csv" //"/home/04489/dhaynes/geotrellis_all_4_12_2018_12instances.csv"
+    val outCSVPath = "/home/04489/dhaynes/geotrellis_all_6_11_2018_12instances.csv"
     val writer = new PrintWriter(new File(outCSVPath))
     writer.write("analytic,dataset,tilesize,time,run\n")
     //Call Reclass Pixel Function (add one to specified value)
@@ -186,18 +185,18 @@ object CountGeoTiff{
     val sc = new SparkContext(conf)
 
     //val geoTiffRDD: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(theRaster.thePath, HadoopGeoTiffRDD.Options.DEFAULT)
-      //val rasterRDD: RDD[(ProjectedExtent, geotrellis.raster.Tile)] = sc.hadoopGeoTiffRDD(raster_path)
-/*      val geoTiff: SinglebandGeoTiff = GeoTiffReader.readSingleband(theValues._2, decompress = false, streaming = true)
+    val rasterRDD: RDD[(ProjectedExtent, geotrellis.raster.Tile)] = sc.hadoopGeoTiffRDD(theRaster.thePath)
+    val geoTiff: SinglebandGeoTiff = GeoTiffReader.readSingleband(theRaster.thePath, decompress = false, streaming = true)
 
       //val geoTiff: SinglebandGeoTiff = SinglebandGeoTiff(r.thePath, decompress = false, streaming = true)
 
-      val pValue = theValues._3
+    val pValue = theRaster.pixelValue
 
-      val ld = LayoutDefinition(geoTiff.rasterExtent, 50)
-      val tiledRaster: RDD[(SpatialKey,geotrellis.raster.Tile)] = rasterRDD.tileToLayout(geoTiff.cellType, ld)
+    val ld = LayoutDefinition(geoTiff.rasterExtent, 50)
+    val tiledRaster: RDD[(SpatialKey,geotrellis.raster.Tile)] = rasterRDD.tileToLayout(geoTiff.cellType, ld)
 
-      val (analyticTime: Double, numPixels: Int) = countPixelsSpark(pValue, tiledRaster)*/
-      // println(analyticTime)
+    val (analyticTime: Double, numPixels: Int) = countPixelsSpark(pValue, tiledRaster)
+    println(analyticTime)
 
     /*for (x <- 1 to 1){
 
