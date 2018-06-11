@@ -174,7 +174,7 @@ object CountGeoTiff{
 
     val outCSVPath = "/home/04489/dhaynes/geotrellis_all_6_11_2018_12instances.csv"
     val writer = new PrintWriter(new File(outCSVPath))
-    writer.write("analytic,dataset,tilesize,time,run\n")
+    writer.write("analytic,dataset,tilesize,time,type,run\n")
     //Call Reclass Pixel Function (add one to specified value)
     //reclassPixels(pixel,rasterArray);
 
@@ -195,10 +195,9 @@ object CountGeoTiff{
     val ld = LayoutDefinition(geoTiff.rasterExtent, 50)
     val tiledRaster: RDD[(SpatialKey,geotrellis.raster.Tile)] = rasterRDD.tileToLayout(geoTiff.cellType, ld)
 
-    val (analyticTime: Double, numPixels: Int) = countPixelsSpark(pValue, tiledRaster)
-    println(analyticTime)
+    
 
-    /*for (x <- 1 to 1){
+    for (x <- 1 to 1){
 
       for (tilesize <- tilesizes) {
         val ld = LayoutDefinition(geoTiff.rasterExtent, tilesize)
@@ -207,16 +206,16 @@ object CountGeoTiff{
 
         //Call Spark Function to count pixels
 
-        //analyticTime = countRaster(tiledRaster, pValue)
-        //writer.write(s"pixlecount,$datasetName,$tilesize,$analyticTime,$x\n")
+        analyticTime = countRaster(tiledRaster, pValue)
+        writer.write(s"pixlecount,$datasetName,$tilesize,$analyticTime,memory,$x\n")
 
-        //analyticTime = reclassifyRaster(tiledRaster, r.pixelValue, r.newPixel)
-        //writer.write(s"reclassify,$datasetName,$tilesize,$analyticTime,$x\n")
+        analyticTime = countRaster(tiledRaster, pValue)
+        writer.write(s"pixlecount,$datasetName,$tilesize,$analyticTime,cache,$x\n")        
 
         tiledRaster.unpersist()
       }
 
-    }*/
+    }
 
     writer.close()
     sc.stop()
