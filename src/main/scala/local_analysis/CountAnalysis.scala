@@ -105,7 +105,7 @@ object CountGeoTiff{
   /*def countRaster(theRaster:org.apache.spark.rdd.RDD[(geotrellis.spark.SpatialKey, geotrellis.raster.Tile)], oldValue:Int) : (Double, Int) = {
 
     var countPixelStart = System.currentTimeMillis()
-    var foundPixels = countPixelsSpark(oldValue, theRaster)
+    var foundPixels: Int = countPixelsSpark(oldValue, theRaster)
     var countPixelStop = System.currentTimeMillis()
     val theTime = countPixelStop - countPixelStart
     //println(s"Milliseconds: ${countPixelStop - countPixelStart}")
@@ -172,7 +172,7 @@ object CountGeoTiff{
       )
     */
 
-    val outCSVPath = "/home/04489/dhaynes/geotrellis_all_6_11_2018_12instances.csv"
+    val outCSVPath = "/data/projects/G-818404/geotrellis_localcount_6_11_2018_12instances.csv"
     val writer = new PrintWriter(new File(outCSVPath))
     writer.write("analytic,dataset,tilesize,time,type,run\n")
     //Call Reclass Pixel Function (add one to specified value)
@@ -202,15 +202,15 @@ object CountGeoTiff{
       for (tilesize <- tilesizes) {
         val ld = LayoutDefinition(geoTiff.rasterExtent, tilesize)
         val tiledRaster: RDD[(SpatialKey,geotrellis.raster.Tile)] = rasterRDD.tileToLayout(geoTiff.cellType, ld)
-        var datasetName : String = r.name
+        var datasetName : String = theRaster.name
 
         //Call Spark Function to count pixels
 
-        analyticTime = countRaster(tiledRaster, pValue)
-        writer.write(s"pixlecount,$datasetName,$tilesize,$analyticTime,memory,$x\n")
+        var memoryTime, numMemoryPixels = countPixelsSpark(pValue, tiledRaster)
+        writer.write(s"pixlecount,$datasetName,$tilesize,$memoryTime,memory,$x\n")
 
-        analyticTime = countRaster(tiledRaster, pValue)
-        writer.write(s"pixlecount,$datasetName,$tilesize,$analyticTime,cache,$x\n")        
+        var cachedTime, numCachedPixels = countPixelsSpark(pValue, tiledRaster)
+        writer.write(s"pixlecount,$datasetName,$tilesize,$cachedTime,cache,$x\n")        
 
         tiledRaster.unpersist()
       }
