@@ -53,9 +53,10 @@ import spray.json.DefaultJsonProtocol._
 import scala.io.StdIn
 import java.io.File
 import java.io._
+import local_analysis.rasterdatasets.myRaster
 //File Object
 
-object RDDCount {
+object Reclassify {
   //Class for testing raster analytics
 
   def countPixels(a:Int, b:geotrellis.raster.Tile) : Int = {
