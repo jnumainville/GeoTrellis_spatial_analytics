@@ -23,12 +23,7 @@ publishMavenStyle := true
 publishArtifact in Test := false
 pomIncludeRepository := { _ => false }
 
-/*
-resolvers ++= Seq(
-  "locationtech-releases" at "https://repo.locationtech.org/content/groups/releases",
-  "locationtech-snapshots" at "https://repo.locationtech.org/content/groups/snapshots",
-  "org.apache.spark" at "https://mvnrepository.com/artifact/org.apache.spark/spark-core"
-)*/
+
 val SparkVersion = "2.2.1"
 
 fork in run := true

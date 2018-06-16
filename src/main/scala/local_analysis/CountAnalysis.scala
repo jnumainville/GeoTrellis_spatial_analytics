@@ -96,15 +96,15 @@ object CountGeoTiff{
 
 
     val rasterDatasets = List(
-      //new myRaster("glc", "/home/david/Downloads/glc2000.tif", 16, 1)
-      new myRaster("glc", "/data/projects/G-818404/glc2000_clipped.tif", 16, 1),
-      new myRaster("meris", "/data/projects/G-818404/meris_2010_clipped.tif", 100, 1),
-      new myRaster("nlcd", "/data/projects/G-818404/nlcd_2006.tif", 21, 1)
+      new myRaster("glc", "/home/david/Downloads/glc2000.tif", 16, 1)
+      //new myRaster("glc", "/data/projects/G-818404/glc2000_clipped.tif", 16, 1),
+      //new myRaster("meris", "/data/projects/G-818404/meris_2010_clipped.tif", 100, 1),
+      //new myRaster("nlcd", "/data/projects/G-818404/nlcd_2006.tif", 21, 1)
       //new rasterdataset("meris_3m", "/data/projects/G-818404/meris_2010_clipped_3m/", 100, 1)
       )
 
 
-    val outCSVPath = "/data/projects/G-818404/geotrellis_localcount_6_11_2018_12instances.csv"
+    val outCSVPath = "/home/david/Downloads/out_count.csv" //"/data/projects/G-818404/geotrellis_localcount_6_11_2018_12instances.csv"
     val writer = new PrintWriter(new File(outCSVPath))
     writer.write("analytic,dataset,tilesize,time,type,run\n")
 
@@ -127,11 +127,11 @@ object CountGeoTiff{
 
           //Call Spark Function to count pixels
 
-          var memoryTime, numMemoryPixels = countPixelsSpark(pValue, tiledRaster)
+          var (memoryTime, numMemoryPixels) = countPixelsSpark(pValue, tiledRaster)
           writer.write(s"pixlecount,$datasetName,$tilesize,$memoryTime,memory,$x\n")
 
           //Call Spark Fucntion again to get the cached time
-          var cachedTime, numCachedPixels = countPixelsSpark(pValue, tiledRaster)
+          var (cachedTime, numCachedPixels) = countPixelsSpark(pValue, tiledRaster)
           writer.write(s"pixlecount,$datasetName,$tilesize,$cachedTime,cache,$x\n")
    
           //Unpersist tiled raster
@@ -147,11 +147,3 @@ object CountGeoTiff{
   }
 
 }
-
-
-
-
-
-
-
-
