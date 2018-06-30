@@ -100,7 +100,7 @@ object Main {
           val focalNeighborhood = Square(1)
 
           //RDD with (spatialKey, focalMean Raster)
-          val meanTile = tiledRaster.mapValues(x=> x.focalMean(focalNeighborhood)
+          val meanTile = tiledRaster.mapValues(x=> x.focalMean(focalNeighborhood))
 
           //Get sample values for the upper left corner of each spatial key
           val sampleCorner = meanTile.mapValues(x=> x.getDouble(0, 0))
