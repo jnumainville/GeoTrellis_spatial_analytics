@@ -15,13 +15,11 @@ import geotrellis.vector.io._
 import spray.json._
 import spray.json.DefaultJsonProtocol._
 import geotrellis.raster._
+import geotrellis.raster.mapalgebra.focal._
+//Square
 import local_analysis.rasterdatasets.myRaster
 //Has TileLayout Object, MultibandTile
 import geotrellis.raster.io.geotiff._
-import geotrellis.raster.render._
-import geotrellis.raster.resample._
-import geotrellis.raster.reproject._
-
 import geotrellis.raster.summary.polygonal._
 import geotrellis.raster.rasterize._
 import geotrellis.raster.rasterize.polygon._
@@ -50,12 +48,10 @@ import org.apache.spark.rdd._
 import org.apache.spark.HashPartitioner
 import org.apache.spark.rdd.RDD
 
-//Libraries for reading a json
-import spray.json._
-import spray.json.DefaultJsonProtocol._
 
 import scala.io.StdIn
 import java.io.File
+import java.io._
 //File Object
 
 
@@ -63,28 +59,27 @@ import java.io.File
 object Main {
 
 
-
-
   def main(args: Array[String]): Unit = {
-  
-  val outCSVPath = "/home/david/Downloads/out.csv"  //"/data/projects/G-818404/geotrellis_focalcount_6_11_2018_12instances.csv"
+
+    val outCSVPath = "/home/david/Downloads/out.csv"  //"/data/projects/G-818404/geotrellis_focalcount_6_11_2018_12instances.csv"
     val writer = new PrintWriter(new File(outCSVPath))
     writer.write("analytic,dataset,tilesize,focalMeantime,counttime,type,run\n")
-  
-  val rasterDatasets = List(
+
+    val rasterDatasets = List(
       new myRaster("glc", "/home/david/Downloads/glc2000.tif", 16, 1)
       //new myRaster("glc", "/data/projects/G-818404/glc2000_clipped.tif", 16, 1),
       //new myRaster("meris", "/data/projects/G-818404/meris_2010_clipped.tif", 100, 1),
       //new myRaster("nlcd", "/data/projects/G-818404/nlcd_2006.tif", 21, 1)
       //new rasterdataset("meris_3m", "/data/projects/G-818404/meris_2010_clipped_3m/", 100, 1)
     )
-    
-  val tilesizes = Array(25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000) //, 1500, 2000, 2500, 3000, 3500, 4000)
-  
-  val conf = new SparkConf().setMaster("local[2]").setAppName("Spark Tiler").set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").set("spark.kryo.regisintrator", "geotrellis.spark.io.kryo.KryoRegistrator")//.set("spark.driver.memory", "2g").set("spark.executor.memory", "1g")
-    val sc = new SparkContext(conf)
-  for(r<-rasterDatasets){
-      val rasterRDD: RDD[(ProjectedExtent, geotrellis.raster.Tile)] = sc.hadoopGeoTiffRDD(r.thePath)
+
+    val tilesizes = Array(25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000) //, 1500, 2000, 2500, 3000, 3500, 4000)
+
+    val conf = new SparkConf().setMaster("local[2]").setAppName("Spark Tiler").set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").set("spark.kryo.regisintrator", "geotrellis.spark.io.kryo.KryoRegistrator")//.set("spark.driver.memory", "2g").set("spark.executor.memory", "1g")
+    implicit val sc = new SparkContext(conf)
+    for(r<-rasterDatasets){
+
+      val rasterRDD: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(r.thePath, HadoopGeoTiffRDD.Options.DEFAULT)
       val geoTiff: SinglebandGeoTiff = GeoTiffReader.readSingleband(r.thePath, decompress = false, streaming = true)
       val pValue = r.pixelValue
 
@@ -107,13 +102,13 @@ object Main {
 
           //print the first five for confirmation
           sampleCorner.take(5)
-         
+
         }
 
       }
 
     }
-     writer.close()
+    writer.close()
     sc.stop()
   }
 
