@@ -50,7 +50,7 @@ import scala.io.StdIn
 import java.io.File
 import java.io._
 import local_analysis.rasterdatasets.myRaster
-
+import org.apache.hadoop.fs.Path
 
 
 object CountGeoTiff{
@@ -96,35 +96,39 @@ object CountGeoTiff{
 
 
     val rasterDatasets = List(
-      new myRaster("glc", "/home/david/Downloads/glc2000.tif", 16, 1)
-      //new myRaster("glc", "/data/projects/G-818404/glc2000_clipped.tif", 16, 1),
-      //new myRaster("meris", "/data/projects/G-818404/meris_2010_clipped.tif", 100, 1),
-      //new myRaster("nlcd", "/data/projects/G-818404/nlcd_2006.tif", 21, 1)
-      //new rasterdataset("meris_3m", "/data/projects/G-818404/meris_2010_clipped_3m/", 100, 1)
+      //new myRaster("glc", "/home/david/Downloads/glc2000.tif", 16, 1)
+      new myRaster("glc", "/data/projects/G-818404/glc2000_clipped.tif", 16, 1),
+      new myRaster("meris", "/data/projects/G-818404/meris_2010_clipped.tif", 100, 1),
+      new myRaster("nlcd", "/data/projects/G-818404/nlcd_2006.tif", 21, 1),
+      new myRaster("meris_3m", "/data/projects/G-818404/meris_3m/", 100, 1)
       )
 
 
-    val outCSVPath = "/home/david/Downloads/out_count.csv" //"/data/projects/G-818404/geotrellis_localcount_6_11_2018_12instances.csv"
+    val outCSVPath = "/data/projects/G-818404/geotrellis_localcount_7_04_2018_12instances.csv"
     val writer = new PrintWriter(new File(outCSVPath))
     writer.write("analytic,dataset,tilesize,time,type,run\n")
 
-    val tilesizes = Array(25, 50)//, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000) //, 1500, 2000, 2500, 3000, 3500, 4000)
+    val tilesizes = Array(25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000) //, 1500, 2000, 2500, 3000, 3500, 4000)
     //Using Spark
 
-    val conf = new SparkConf().setMaster("local[2]").setAppName("Spark Tiler").set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").set("spark.kryo.regisintrator", "geotrellis.spark.io.kryo.KryoRegistrator")//.set("spark.driver.memory", "2g").set("spark.executor.memory", "1g")
+    val conf = new SparkConf().setMaster("local[12]").setAppName("Spark Tiler").set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").set("spark.kryo.regisintrator", "geotrellis.spark.io.kryo.KryoRegistrator")//.set("spark.driver.memory", "2g").set("spark.executor.memory", "1g")
     implicit val sc = new SparkContext(conf)
     for(r<-rasterDatasets){
 
-      val rasterRDD: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(r.thePath, HadoopGeoTiffRDD.Options.DEFAULT)
+      val rasterRDD: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(new Path(r.thePath), HadoopGeoTiffRDD.Options.DEFAULT)
+     
       //val rasterRDD: RDD[(ProjectedExtent, geotrellis.raster.Tile)] = sc.hadoopGeoTiffRDD(r.thePath)
-      val geoTiff: SinglebandGeoTiff = GeoTiffReader.readSingleband(r.thePath, decompress = false, streaming = true)
+      //val rasterPath = new Path(r.thePath)
+      //val geoTiff: SinglebandGeoTiff = GeoTiffReader.readSingleband(r.thePath, decompress = false, streaming = true)
       val pValue = r.pixelValue
 
-      for (x <- 1 to 1){
+      for (x <- 1 to 3){
 
         for (tilesize <- tilesizes) {
-          val ld = LayoutDefinition(geoTiff.rasterExtent, tilesize)
-          val tiledRaster: RDD[(SpatialKey,geotrellis.raster.Tile)] = rasterRDD.tileToLayout(geoTiff.cellType, ld)
+
+          val (_,rasterMetaData) = TileLayerMetadata.fromRdd(rasterRDD, FloatingLayoutScheme(tilesize))
+          //val ld = LayoutDefinition(geoTiff.rasterExtent, tilesize)
+          val tiledRaster: RDD[(SpatialKey,geotrellis.raster.Tile)] = rasterRDD.tileToLayout(rasterMetaData.cellType, rasterMetaData.layout)
           var datasetName : String = r.name
 
           //Call Spark Function to count pixels
