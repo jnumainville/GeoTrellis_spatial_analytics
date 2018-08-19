@@ -52,11 +52,42 @@ import org.apache.spark.rdd.RDD
 import scala.io.StdIn
 import java.io.File
 import java.io._
-//File Object
+
+//Libraries for reading a json
+import spray.json._
+import spray.json.DefaultJsonProtocol._
+
+import scala.io.StdIn
+import java.io.File
+import java.io._
+import focal_analysis.rasterdatasets.myRaster
 
 
 
-object Main {
+object focalAnalysisMain {
+  def focalAnalysis(theRaster:org.apache.spark.rdd.RDD[(geotrellis.spark.SpatialKey, geotrellis.raster.Tile)]) ={
+    var focalStart = System.currentTimeMillis()
+
+
+    //Call Spark Function for focal analysis
+    // 3x3 square neighborhood
+    val focalNeighborhood = Square(1)
+
+    //RDD with (spatialKey, focalMean Raster)
+    val meanTile = theRaster.mapValues(x=> x.focalMean(focalNeighborhood))
+
+    //Get sample values for the upper left corner of each spatial key
+    val sampleCorner = meanTile.mapValues(x=> x.getDouble(0, 0))
+
+    //print the first five for confirmation
+    sampleCorner.take(5)
+
+    var focalPixelStop = System.currentTimeMillis()
+    val focalTime: Double = focalStop - focalStart
+    (focalTime,meanTile)
+
+
+  }
 
 
   def main(args: Array[String]): Unit = {
@@ -81,7 +112,6 @@ object Main {
 
       val rasterRDD: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(r.thePath, HadoopGeoTiffRDD.Options.DEFAULT)
       val geoTiff: SinglebandGeoTiff = GeoTiffReader.readSingleband(r.thePath, decompress = false, streaming = true)
-      val pValue = r.pixelValue
 
       for (x <- 1 to 1){
 
@@ -90,19 +120,14 @@ object Main {
           val tiledRaster: RDD[(SpatialKey,geotrellis.raster.Tile)] = rasterRDD.tileToLayout(geoTiff.cellType, ld)
           var datasetName : String = r.name
 
-          //Call Spark Function for focal analysis
-          // 3x3 square neighborhood
-          val focalNeighborhood = Square(1)
+          //Call Spark Function focalAnalysis
+          var (focalMemoryTime,focalTileRaster)  = focalAnalysis(tiledRaster)
+          //println(focalMemoryTime,focalTileRaster)
+          writer.write(s"focalMean,$datasetName,$tilesize,$focalMemoryTime,memory,$x\n")
 
-          //RDD with (spatialKey, focalMean Raster)
-          val meanTile = tiledRaster.mapValues(x=> x.focalMean(focalNeighborhood))
-
-          //Get sample values for the upper left corner of each spatial key
-          val sampleCorner = meanTile.mapValues(x=> x.getDouble(0, 0))
-
-          //print the first five for confirmation
-          sampleCorner.take(5)
-
+          var (focalCachedTime,focalCashedTileRaster)  = focalAnalysis(tiledRaster)
+          writer.write(s"focalMean,$datasetName,$tilesize,$focalCachedTime,cached,$x\n")
+          tiledRaster.unpersist()
         }
 
       }
