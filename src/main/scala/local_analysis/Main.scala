@@ -89,6 +89,16 @@ object ReclassifyTiff{
     var reclassTime = reclassPixelStop - reclassPixelStart
     (reclassTime, countTime, reclassedRaster)
   }
+  def mapAlgebraMultiply(theRaster:org.apache.spark.rdd.RDD[(geotrellis.spark.SpatialKey, geotrellis.raster.Tile)]) ={
+    //To get min_max values of multiplied raster use .findMinMax
+    //There are several other local functions from division to cosh
+
+    var mapAlgebraStart = System.currentTimeMillis()
+    var multipliedRaster = theRaster.localMultiply(theRaster)
+    var mapAlgebraStop = System.currentTimeMillis()
+    var mapAlgebraTime = mapAlgebraStop - mapAlgebraStart
+    (mapAlgebraTime, multipliedRaster)
+  }
 
 
   def main(args: Array[String]): Unit = {
