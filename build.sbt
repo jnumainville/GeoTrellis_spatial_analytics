@@ -27,6 +27,9 @@ pomIncludeRepository := { _ => false }
 val SparkVersion = "2.2.1"
 
 fork in run := true
+javaOptions in run ++= Seq(
+  "-Dlog4j.debug=true",
+  "-Dlog4j.configuration=log4j.properties")
 outputStrategy in run := Some(StdoutOutput)
 connectInput in run := true
 
@@ -34,7 +37,8 @@ libraryDependencies ++= Seq(
   "org.locationtech.geotrellis" %% "geotrellis-spark" % "1.2.0-RC2",
   "org.apache.spark" %% "spark-core" % "2.2.1" % "compile",
   //"org.apache.spark"      %% "spark-core"       % "2.2.0" % Provided
-  "org.scalatest"         %%  "scalatest"       % "2.2.0" % Test
+  "org.scalatest"         %%  "scalatest"       % "2.2.0" % Test,
+  "log4j" % "log4j" % "1.2.14"
 )
 
 // When creating fat jar, remote some files with
