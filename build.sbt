@@ -29,7 +29,7 @@ val SparkVersion = "2.2.1"
 fork in run := true
 javaOptions in run ++= Seq(
   "-Dlog4j.debug=true",
-  "-Dlog4j.configuration=log4j.properties")
+  "-Dlog4j.configuration=file://log4j.properties")
 outputStrategy in run := Some(StdoutOutput)
 connectInput in run := true
 
