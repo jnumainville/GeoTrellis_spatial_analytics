@@ -98,32 +98,33 @@ object ReclassifyTiff{
       new myRaster("glc", "/data/projects/G-818404/glc2000_clipped.tif", 16, 83),
       new myRaster("meris", "/data/projects/G-818404/meris_2010_clipped.tif", 100, 83),
       new myRaster("nlcd", "/data/projects/G-818404/nlcd_2006.tif", 21, 83),
-      new myRaster("meris_3m", "/data/projects/G-818404/meris_3m/", 100, 83)
+      // new myRaster("meris_3m", "/data/projects/G-818404/meris_3m/", 100, 83)
     )
 
-    val outCSVPath = "/data/projects/G-818404/geotrellis_reclass_8_23_2018_12instances.csv"
+    val outCSVPath = "/data/projects/G-818404/geotrellis_reclass_8_27_2018_12instances.csv"
     val writer = new PrintWriter(new File(outCSVPath))
     writer.write("analytic,dataset,tilesize,reclasstime,counttime,type,run\n")
 
     
-    val tilesizes = Array(25, 50, 100) //, 200, 300, 400, 500, 600, 700, 800, 900, 1000) //, 1500, 2000, 2500, 3000, 3500, 4000)
+    val tilesizes = Array(25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000) //, 1500, 2000, 2500, 3000, 3500, 4000)
 
     val conf = new SparkConf().setMaster("local[12]").setAppName("Spark Tiler").set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").set("spark.kryo.regisintrator", "geotrellis.spark.io.kryo.KryoRegistrator")//.set("spark.driver.memory", "2g").set("spark.executor.memory", "1g")
     implicit val sc = new SparkContext(conf)
 
     for(r<-rasterDatasets){
 
-      val rasterRDD: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(r.thePath, HadoopGeoTiffRDD.Options.DEFAULT)
-      //HadoopGeoTiffRDD.Options(maxTileSize=Some(256), numPartitions=Some(500)))
-      val pValue = r.pixelValue
-
-      for (x <- 1 to 1){
+      for (x <- 1 to 3){
 
         for (tilesize <- tilesizes) {
+
+          val rasterRDD: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(r.thePath, HadoopGeoTiffRDD.Options.DEFAULT)
           val (_,rasterMetaData) = TileLayerMetadata.fromRdd(rasterRDD, FloatingLayoutScheme(tilesize))
           
           val tiledRaster: RDD[(SpatialKey,geotrellis.raster.Tile)] = rasterRDD.tileToLayout(rasterMetaData.cellType, rasterMetaData.layout)
+          rasterRDD.unpersist()
+          
           var datasetName : String = r.name
+          var pValue = r.pixelValue
 
           //Call Spark Function to Reclassify Raster
           var (reclassMemoryTime,reclassMemoryCountTime,reclassedTileRaster)  = reclassifyRaster(tiledRaster, r.pixelValue, r.newPixel)
