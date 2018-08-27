@@ -58,6 +58,22 @@ import java.io._
 
 object Main {
 
+  def countPixels(a:Int, b:geotrellis.raster.Tile) : Int = {
+    var pixelCount:Int = 0
+    b.foreach {z => if(z==a) pixelCount += 1}
+    pixelCount
+  }
+
+  def countPixelsSpark(a:Int, b:org.apache.spark.rdd.RDD[(geotrellis.spark.SpatialKey, geotrellis.raster.Tile)]) = {
+    //The code below could potentially be simplified by using mapValues on the pair RDD vs map on the normal RDD.
+    var countPixelStart = System.currentTimeMillis()
+    val RDDValues: org.apache.spark.rdd.RDD[geotrellis.raster.Tile] = b.values
+    val y = RDDValues.map(x => countPixels(a,x))
+    val sumOfPixels = y.collect.sum
+    var countPixelStop = System.currentTimeMillis()
+    val theTime: Double = countPixelStop - countPixelStart
+    (theTime, sumOfPixels)
+  }
 
   def main(args: Array[String]): Unit = {
 
@@ -73,21 +89,23 @@ object Main {
       //new rasterdataset("meris_3m", "/data/projects/G-818404/meris_2010_clipped_3m/", 100, 1)
     )
 
-    val tilesizes = Array(25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000) //, 1500, 2000, 2500, 3000, 3500, 4000)
+    val tilesizes = Array(25, 50, 100) //, 200, 300, 400, 500, 600, 700, 800, 900, 1000) //, 1500, 2000, 2500, 3000, 3500, 4000)
 
-    val conf = new SparkConf().setMaster("local[2]").setAppName("Spark Tiler").set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").set("spark.kryo.regisintrator", "geotrellis.spark.io.kryo.KryoRegistrator")//.set("spark.driver.memory", "2g").set("spark.executor.memory", "1g")
+    val conf = new SparkConf().setMaster("local[12]").setAppName("Spark Tiler").set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").set("spark.kryo.regisintrator", "geotrellis.spark.io.kryo.KryoRegistrator")//.set("spark.driver.memory", "2g").set("spark.executor.memory", "1g")
     implicit val sc = new SparkContext(conf)
-    for(r<-rasterDatasets){
 
-      val rasterRDD: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(r.thePath, HadoopGeoTiffRDD.Options.DEFAULT)
-      val geoTiff: SinglebandGeoTiff = GeoTiffReader.readSingleband(r.thePath, decompress = false, streaming = true)
-      val pValue = r.pixelValue
+    for(r<-rasterDatasets){
 
       for (x <- 1 to 1){
 
         for (tilesize <- tilesizes) {
-          val ld = LayoutDefinition(geoTiff.rasterExtent, tilesize)
-          val tiledRaster: RDD[(SpatialKey,geotrellis.raster.Tile)] = rasterRDD.tileToLayout(geoTiff.cellType, ld)
+
+          val rasterRDD: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(r.thePath, HadoopGeoTiffRDD.Options.DEFAULT)
+          val (_,rasterMetaData) = TileLayerMetadata.fromRdd(rasterRDD, FloatingLayoutScheme(tilesize))
+          
+          val tiledRaster: RDD[(SpatialKey,geotrellis.raster.Tile)] = rasterRDD.tileToLayout(rasterMetaData.cellType, rasterMetaData.layout)
+          rasterRDD.unpersist()
+        
           var datasetName : String = r.name
 
           //Call Spark Function for focal analysis
@@ -96,12 +114,19 @@ object Main {
 
           //RDD with (spatialKey, focalMean Raster)
           val meanTile = tiledRaster.mapValues(x=> x.focalMean(focalNeighborhood))
+          var (memoryTime, numMemoryPixels) = countPixelsSpark(pValue, meanTile)
+          writer.write(s"pixlecount,$datasetName,$tilesize,$memoryTime,memory,$x\n")
+          
+          var (cachedTime, numCachedPixels) = countPixelsSpark(pValue, meanTile)
+          writer.write(s"pixlecount,$datasetName,$tilesize,$cachedTime,cache,$x\n")
 
           //Get sample values for the upper left corner of each spatial key
-          val sampleCorner = meanTile.mapValues(x=> x.getDouble(0, 0))
+          //val sampleCorner = meanTile.mapValues(x=> x.getDouble(0, 0))
 
           //print the first five for confirmation
-          sampleCorner.take(5)
+          //sampleCorner.take(5)
+          tiledRaster.unpersist()
+          meanTile.unpersist()
 
         }
 
