@@ -4,11 +4,9 @@ import geotrellis.raster._
 import geotrellis.spark._
 import geotrellis.vector.io._
 import geotrellis.vector.io.json._
-
 import scala.io.StdIn.{readInt, readLine}
 import geotrellis.raster.io.geotiff.reader.GeoTiffReader
 import geotrellis.raster.io.geotiff._
-
 import scala.io.Source
 import geotrellis.vector._
 import geotrellis.vector.io._
@@ -21,13 +19,10 @@ import geotrellis.raster.io.geotiff._
 import geotrellis.raster.render._
 import geotrellis.raster.resample._
 import geotrellis.raster.reproject._
-
 import geotrellis.raster.summary.polygonal._
 import geotrellis.raster.rasterize._
 import geotrellis.raster.rasterize.polygon._
 import geotrellis.raster.mapalgebra.local._
-// import geotrellis.proj4._
-
 import geotrellis.spark._
 import geotrellis.spark.io._
 import geotrellis.spark.io.file._
@@ -37,26 +32,22 @@ import geotrellis.spark.pyramid._
 import geotrellis.spark.reproject._
 import geotrellis.spark.tiling._
 import geotrellis.spark.render._
-
 //Vector Json
 import geotrellis.vector._
 import geotrellis.vector.io._
 import geotrellis.vector.io.json._
-
 //ProjectedExtent object
 import org.apache.spark._
 import org.apache.spark.rdd._
-
 import org.apache.spark.HashPartitioner
 import org.apache.spark.rdd.RDD
-
 //Libraries for reading a json
 import spray.json._
 import spray.json.DefaultJsonProtocol._
-
+//File Object
 import scala.io.StdIn
 import java.io.File
-//File Object
+
 
 
 object Main {
@@ -79,23 +70,32 @@ object Main {
 
     for(r<-rasterDatasets){
       //val geoTiff: SinglebandGeoTiff = SinglebandGeoTiff(r.thePath)
-      val rasterRDD: RDD[(ProjectedExtent, geotrellis.raster.Tile)] = sc.hadoopGeoTiffRDD(r.thePath)
-      val geoTiff: SinglebandGeoTiff = GeoTiffReader.readSingleband(r.thePath, decompress = false, streaming = true)
-      val ld = LayoutDefinition(geoTiff.rasterExtent, 100)
-      val tiledRaster: RDD[(SpatialKey,geotrellis.raster.Tile)] = rasterRDD.tileToLayout(geoTiff.cellType, ld)
+      val rasterRDD: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(r.thePath, HadoopGeoTiffRDD.Options.DEFAULT)
+      val (_,rasterMetaData) = TileLayerMetadata.fromRdd(rasterRDD, FloatingLayoutScheme(tilesize))
+
+      // val rasterRDD: RDD[(ProjectedExtent, geotrellis.raster.Tile)] = sc.hadoopGeoTiffRDD(r.thePath)
+      // val geoTiff: SinglebandGeoTiff = GeoTiffReader.readSingleband(r.thePath, decompress = false, streaming = true)
+      // val ld = LayoutDefinition(geoTiff.rasterExtent, 100)
+      val tiledRaster: RDD[(SpatialKey,geotrellis.raster.Tile)] = rasterRDD.tileToLayout(rasterMetaData.cellType, rasterMetaData.layout)
+
 
 
     }
 
-    /*
+
         //Vector Layer
-        val file: String = "/home/david/shapefiles/4326/states.geojson" //"data/censusMetroNew.geojson"
+        val file: String = "/home/david/shapefiles/4326/states_2.geojson" //"data/censusMetroNew.geojson"
         val region_files = scala.io.Source.fromFile(file).getLines.mkString
-        case class Attributes(NAME: String,LSAD: String,AFFGEOID: String,ALAND: Int,AWATER: Int, ID: Int)
-        implicit val boxedToRead = jsonFormat5(Attributes)
+        case class Attributes(NAME: String,LSAD: String,AFFGEOID: String,ALAND: Int, AWATER: Int, ID: Int)
+        implicit val boxedToRead = jsonFormat6(Attributes)
 
         val theRegion: Map[String, MultiPolygonFeature[Attributes]] = region_files.parseGeoJson[JsonFeatureCollectionMap].getAllMultiPolygonFeatures[Attributes]
         //Choose one MultiPolygon out of Feature Collection (ex. Great Plains, MO)
+
+        val regionKeys = theRegion.key.toList
+
+        val regionRDD: RDD[MultiPolygon] = sc.parallelize(Array(theRegion.get(polyKeys(0)).get.geom))
+        val geomLayerRDD: RDD[(SpatialKey, Tile)] with Metadata[LayoutDefinition] = regionRDD.rasterize(1, rasterMetaData.cellType, rasterMetadata.layout)
 
         val regionRDD: RDD[MultiPolygon] = sc.parallelize(Array(theRegion.get("48460").get.geom))
 
@@ -112,7 +112,9 @@ object Main {
         //A bit unsure of the statistics surrounding in this step.  It might be more complex than taking the average of the averages/mean of the means for the tiles (?).
         val i = zonalStatisticsValues.map(x=> x(0))
         val l = i.map(x=> x.zmax)
-        val maximum = l.max*/
+        val maximum = l.max
+
+
     sc.stop()
   }
 
