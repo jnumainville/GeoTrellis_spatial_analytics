@@ -71,7 +71,7 @@ object Main {
     for(r<-rasterDatasets){
       //val geoTiff: SinglebandGeoTiff = SinglebandGeoTiff(r.thePath)
       val rasterRDD: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(r.thePath, HadoopGeoTiffRDD.Options.DEFAULT)
-      val (_,rasterMetaData) = TileLayerMetadata.fromRdd(rasterRDD, FloatingLayoutScheme(tilesize))
+      val (_,rasterMetaData) = TileLayerMetadata.fromRdd(rasterRDD, FloatingLayoutScheme(250))
 
       // val rasterRDD: RDD[(ProjectedExtent, geotrellis.raster.Tile)] = sc.hadoopGeoTiffRDD(r.thePath)
       // val geoTiff: SinglebandGeoTiff = GeoTiffReader.readSingleband(r.thePath, decompress = false, streaming = true)
@@ -79,9 +79,9 @@ object Main {
       val tiledRaster: RDD[(SpatialKey,geotrellis.raster.Tile)] = rasterRDD.tileToLayout(rasterMetaData.cellType, rasterMetaData.layout)
 
 
-
     }
 
+/*
 
         //Vector Layer
         val file: String = "/home/david/shapefiles/4326/states_2.geojson" //"data/censusMetroNew.geojson"
@@ -94,13 +94,15 @@ object Main {
 
         val regionKeys = theRegion.key.toList
 
+        for (i<-0 to regionKeys.length-1){
+          println(i)
+          val regionRDD: RDD[MultiPolygon] = sc.parallelize(Array(theRegion.get(regionKeys(i).toString).get.geom))
+        }
+
         val regionRDD: RDD[MultiPolygon] = sc.parallelize(Array(theRegion.get(polyKeys(0)).get.geom))
-        val geomLayerRDD: RDD[(SpatialKey, Tile)] with Metadata[LayoutDefinition] = regionRDD.rasterize(1, rasterMetaData.cellType, rasterMetadata.layout)
-
-        val regionRDD: RDD[MultiPolygon] = sc.parallelize(Array(theRegion.get("48460").get.geom))
-
         //Rasterize Vector
-        val geomLayerRDD: RDD[(SpatialKey, Tile)] with Metadata[LayoutDefinition] = regionRDD.rasterize(1, geoTiff.cellType, ld)
+        val geomLayerRDD: RDD[(SpatialKey, Tile)] with Metadata[LayoutDefinition] = regionRDD.rasterize(1, rasterMetaData.cellType, rasterMetaData.layout)
+
 
         //Joined both RDDs by Spatial Key
         val joinedRasters = tiledRaster.join(geomLayerRDD)
@@ -112,8 +114,9 @@ object Main {
         //A bit unsure of the statistics surrounding in this step.  It might be more complex than taking the average of the averages/mean of the means for the tiles (?).
         val i = zonalStatisticsValues.map(x=> x(0))
         val l = i.map(x=> x.zmax)
-        val maximum = l.max
+2        val maximum = l.max
 
+*/
 
     sc.stop()
   }

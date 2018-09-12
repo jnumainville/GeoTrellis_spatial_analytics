@@ -34,7 +34,7 @@ outputStrategy in run := Some(StdoutOutput)
 connectInput in run := true
 
 libraryDependencies ++= Seq(
-  "org.locationtech.geotrellis" %% "geotrellis-spark" % "1.2.0-RC2",
+  "org.locationtech.geotrellis" %% "geotrellis-spark" % "1.2.0",
   "org.apache.spark" %% "spark-core" % "2.2.1" % "compile",
   //"org.apache.spark"      %% "spark-core"       % "2.2.0" % Provided
   "org.scalatest"         %%  "scalatest"       % "2.2.0" % Test,
