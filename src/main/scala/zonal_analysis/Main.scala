@@ -47,6 +47,7 @@ import spray.json.DefaultJsonProtocol._
 //File Object
 import scala.io.StdIn
 import java.io.File
+import scala.collection.mutable.ListBuffer
 
 
 
@@ -54,7 +55,7 @@ object Main {
 
   def main(args: Array[String]): Unit = {
 
-    val tilesizes = Array(25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000) //, 1500, 2000, 2500, 3000, 3500, 4000)
+    val tileSizes = Array(25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000) //, 1500, 2000, 2500, 3000, 3500, 4000)
 
     //Raster Layer
     val rasterDatasets = List(
@@ -65,21 +66,70 @@ object Main {
     //new rasterdataset("meris_3m", "/data/projects/G-818404/meris_2010_clipped_3m/", 100, 1)
     )
 
-    val conf = new SparkConf().setMaster("local[2]").setAppName("Spark Tiler").set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").set("spark.kryo.regisintrator", "geotrellis.spark.io.kryo.KryoRegistrator")
+    val vectorDatasets = List(
+      ("states", "/home/david/shapefiles/4326/states_2.geojson")
+    )
+    val conf = new SparkConf().setMaster("local[2]").setAppName("Zonal Stats").set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").set("spark.kryo.regisintrator", "geotrellis.spark.io.kryo.KryoRegistrator")
     implicit val sc = new SparkContext(conf)
 
     for(r<-rasterDatasets){
-      //val geoTiff: SinglebandGeoTiff = SinglebandGeoTiff(r.thePath)
-      val rasterRDD: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(r.thePath, HadoopGeoTiffRDD.Options.DEFAULT)
-      val (_,rasterMetaData) = TileLayerMetadata.fromRdd(rasterRDD, FloatingLayoutScheme(250))
+//      for (tile <- tileSizes){
 
-      // val rasterRDD: RDD[(ProjectedExtent, geotrellis.raster.Tile)] = sc.hadoopGeoTiffRDD(r.thePath)
-      // val geoTiff: SinglebandGeoTiff = GeoTiffReader.readSingleband(r.thePath, decompress = false, streaming = true)
-      // val ld = LayoutDefinition(geoTiff.rasterExtent, 100)
-      val tiledRaster: RDD[(SpatialKey,geotrellis.raster.Tile)] = rasterRDD.tileToLayout(rasterMetaData.cellType, rasterMetaData.layout)
+        //val geoTiff: SinglebandGeoTiff = SinglebandGeoTiff(r.thePath)
+        val rasterRDD: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(r.thePath, HadoopGeoTiffRDD.Options.DEFAULT)
+        val (_,rasterMetaData) = TileLayerMetadata.fromRdd(rasterRDD, FloatingLayoutScheme(250))
+        val tiledRaster: RDD[(SpatialKey,geotrellis.raster.Tile)] = rasterRDD.tileToLayout(rasterMetaData.cellType, rasterMetaData.layout)
+        val rasterTileLayerRDD: TileLayerRDD[SpatialKey] = ContextRDD(tiledRaster, rasterMetaData)
+        //number of partitions RDD.keys.toList.length
+
+        rasterRDD.unpersist()
+        tiledRaster.unpersist()
+        // for(v<-vectorDatasets){}
+        // val file: String = "/home/david/shapefiles/4326/states_2.geojson" //"data/censusMetroNew.geojson"
+        val jsonPath  = vectorDatasets(0)._2
+        val theJSON = scala.io.Source.fromFile(jsonPath).getLines.mkString
+        case class Attributes(NAME: String,LSAD: String,AFFGEOID: String,ALAND: Int, AWATER: Int, ID: Int)
+        implicit val boxedToRead = jsonFormat6(Attributes)
+
+        // This needs to be 2 separate functions
+        val multiPolygons: Map[String, MultiPolygonFeature[Attributes]] = theJSON.parseGeoJson[JsonFeatureCollectionMap].getAllMultiPolygonFeatures[Attributes]
+        val polygons: Map[String, PolygonFeature[Attributes]] = theJSON.parseGeoJson[JsonFeatureCollectionMap].getAllPolygonFeatures[Attributes]
 
 
-    }
+        //def MultiPolygonSummaryStats(mp: Map[String,geotrellis.vector.MultiPolygonFeature[Attributes]] :org.apache.spark.rdd.RDD[(geotrellis.spark.SpatialKey, geotrellis.raster.Tile)], oldValue:Int, newValue:Int)  = {
+
+        val theMultiPolygonKeys = multiPolygons.keys.toList
+        var ZonalStats = new ListBuffer[Map[String, (Int, Int, Double)]]()
+        for (i<-0 to theMultiPolygonKeys.length-1){
+
+          //var geom = multiPolygons.get(theMultiPolygonKeys(0).toString).get.geom
+          var geom = multiPolygons.get(theMultiPolygonKeys(i).toString.get.geom
+          var histogram = rasterTileLayerRDD.polygonalHistogram(geom)
+          var(theMin, theMax) = histogram.minMaxValues.min
+          var theMean = histogram.mean.min
+
+          ZonalStats += Map(theMultiPolygonKeys(i).toString > (theMin, theMax, theMean))
+          //Map("x" -> 24, "y" -> 25, "z" -> 26)
+
+        }
+
+        val thePolygonKeys = polygons.keys.toList
+
+/*        for (i<-0 to regionKeys.length-1){
+          //println(i)
+          //val regionRDD: RDD[MultiPolygon] = sc.parallelize(Array(theRegion.get(regionKeys(i).toString).get.geom))
+          var geom = regionKeys(i).toString).get.geom
+          val histogram = rasterTileLayerRDD.polygonalHistogram(geom)
+          histogram.minMaxValues
+          histogram.mean*/
+      }
+
+      //      }
+
+
+
+
+//    }
 
 /*
 
@@ -92,11 +142,15 @@ object Main {
         val theRegion: Map[String, MultiPolygonFeature[Attributes]] = region_files.parseGeoJson[JsonFeatureCollectionMap].getAllMultiPolygonFeatures[Attributes]
         //Choose one MultiPolygon out of Feature Collection (ex. Great Plains, MO)
 
-        val regionKeys = theRegion.key.toList
+        val regionKeys = theRegion.keys.toList
 
         for (i<-0 to regionKeys.length-1){
-          println(i)
-          val regionRDD: RDD[MultiPolygon] = sc.parallelize(Array(theRegion.get(regionKeys(i).toString).get.geom))
+          //println(i)
+          //val regionRDD: RDD[MultiPolygon] = sc.parallelize(Array(theRegion.get(regionKeys(i).toString).get.geom))
+          var geom = regionKeys(i).toString).get.geom
+          val histogram = rasterTileLayerRDD.polygonalHistogram(geom)
+          histogram.minMaxValues
+          histogram.mean
         }
 
         val regionRDD: RDD[MultiPolygon] = sc.parallelize(Array(theRegion.get(polyKeys(0)).get.geom))
@@ -114,7 +168,7 @@ object Main {
         //A bit unsure of the statistics surrounding in this step.  It might be more complex than taking the average of the averages/mean of the means for the tiles (?).
         val i = zonalStatisticsValues.map(x=> x(0))
         val l = i.map(x=> x.zmax)
-2        val maximum = l.max
+        val maximum = l.max
 
 */
 
