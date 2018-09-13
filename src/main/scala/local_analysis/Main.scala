@@ -93,6 +93,7 @@ object ReclassifyTiff{
 
   def main(args: Array[String]): Unit = {
 
+    Logger.getLogger("org.apache.spark").setLevel(Level.ERROR)
     val rasterDatasets = List(
       new myRaster("glc", "/home/david/Downloads/glc2000.tif", 16, 1)
       /*new myRaster("glc", "/data/projects/G-818404/glc2000_clipped.tif", 16, 83),

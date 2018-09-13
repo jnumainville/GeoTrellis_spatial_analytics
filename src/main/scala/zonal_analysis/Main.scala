@@ -48,16 +48,15 @@ import spray.json.DefaultJsonProtocol._
 import scala.io.StdIn
 import java.io.File
 import scala.collection.mutable.ListBuffer
-
+import org.apache.log4j.{Level, Logger}
 
 
 object Main {
 
   def main(args: Array[String]): Unit = {
 
-    val tileSizes = Array(25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000) //, 1500, 2000, 2500, 3000, 3500, 4000)
-
-    //Raster Layer
+    Logger.getLogger("org.apache.spark").setLevel(Level.ERROR)
+    //Raster Dataset Path
     val rasterDatasets = List(
       new myRaster("glc", "/home/david/Downloads/glc2000.tif", 16, 1, 4326)
     //new myRaster("glc", "/data/projects/G-818404/glc2000_clipped.tif", 16, 1),
@@ -69,6 +68,12 @@ object Main {
     val vectorDatasets = List(
       ("states", "/home/david/shapefiles/4326/states_2.geojson")
     )
+
+    val tileSizes = Array(25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000) //, 1500, 2000, 2500, 3000, 3500, 4000)
+
+    val outSummaryStats = "/home/david/geotrellis_glc_stats_zonalstats.csv"
+    //val writer = new BufferedWriter(new )
+
     val conf = new SparkConf().setMaster("local[2]").setAppName("Zonal Stats").set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").set("spark.kryo.regisintrator", "geotrellis.spark.io.kryo.KryoRegistrator")
     implicit val sc = new SparkContext(conf)
 
@@ -99,29 +104,46 @@ object Main {
         //def MultiPolygonSummaryStats(mp: Map[String,geotrellis.vector.MultiPolygonFeature[Attributes]] :org.apache.spark.rdd.RDD[(geotrellis.spark.SpatialKey, geotrellis.raster.Tile)], oldValue:Int, newValue:Int)  = {
 
         val theMultiPolygonKeys = multiPolygons.keys.toList
+        val thePolygonKeys = multiPolygons.keys.toList
+
         var ZonalStats = new ListBuffer[Map[String, (Int, Int, Double)]]()
+
+        var zonalStatsStart = System.currentTimeMillis()
         for (i<-0 to theMultiPolygonKeys.length-1){
 
           //var geom = multiPolygons.get(theMultiPolygonKeys(0).toString).get.geom
-          var geom = multiPolygons.get(theMultiPolygonKeys(i).toString.get.geom
+          var geom = multiPolygons.get(theMultiPolygonKeys(i).toString).get.geom
           var histogram = rasterTileLayerRDD.polygonalHistogram(geom)
           var(theMin, theMax) = histogram.minMaxValues.min
           var theMean = histogram.mean.min
+          println(theMultiPolygonKeys(i).toString, theMin, theMax, theMean)
 
-          ZonalStats += Map(theMultiPolygonKeys(i).toString > (theMin, theMax, theMean))
+          ZonalStats += Map(theMultiPolygonKeys(i).toString -> (theMin, theMax, theMean))
           //Map("x" -> 24, "y" -> 25, "z" -> 26)
 
         }
 
-        val thePolygonKeys = polygons.keys.toList
+        for (i<-0 to thePolygonKeys.length-1){
 
-/*        for (i<-0 to regionKeys.length-1){
-          //println(i)
-          //val regionRDD: RDD[MultiPolygon] = sc.parallelize(Array(theRegion.get(regionKeys(i).toString).get.geom))
-          var geom = regionKeys(i).toString).get.geom
-          val histogram = rasterTileLayerRDD.polygonalHistogram(geom)
-          histogram.minMaxValues
-          histogram.mean*/
+
+          var geom = polygons.get(thePolygonKeys(i).toString).get.geom
+          var histogram = rasterTileLayerRDD.polygonalHistogram(geom)
+          var(theMin, theMax) = histogram.minMaxValues.min
+          var theMean = histogram.mean.min
+          println(thePolygonKeys(i).toString, theMin, theMax, theMean)
+
+          ZonalStats += Map(thePolygonKeys(i).toString -> (theMin, theMax, theMean))
+          //Map("x" -> 24, "y" -> 25, "z" -> 26)
+
+        }
+
+        var zonalStatsStop = System.currentTimeMillis()
+        val finalTime = zonalStatsStop-zonalStatsStart
+        println("Time to complete: ", finalTime)
+/*        val multiPolygonStats = ZonalStats.toList
+        val thePolygonKeys = polygons.keys.toList*/
+        // ZonalStats.toList.foreach(writer.write)
+
       }
 
       //      }
@@ -131,46 +153,6 @@ object Main {
 
 //    }
 
-/*
-
-        //Vector Layer
-        val file: String = "/home/david/shapefiles/4326/states_2.geojson" //"data/censusMetroNew.geojson"
-        val region_files = scala.io.Source.fromFile(file).getLines.mkString
-        case class Attributes(NAME: String,LSAD: String,AFFGEOID: String,ALAND: Int, AWATER: Int, ID: Int)
-        implicit val boxedToRead = jsonFormat6(Attributes)
-
-        val theRegion: Map[String, MultiPolygonFeature[Attributes]] = region_files.parseGeoJson[JsonFeatureCollectionMap].getAllMultiPolygonFeatures[Attributes]
-        //Choose one MultiPolygon out of Feature Collection (ex. Great Plains, MO)
-
-        val regionKeys = theRegion.keys.toList
-
-        for (i<-0 to regionKeys.length-1){
-          //println(i)
-          //val regionRDD: RDD[MultiPolygon] = sc.parallelize(Array(theRegion.get(regionKeys(i).toString).get.geom))
-          var geom = regionKeys(i).toString).get.geom
-          val histogram = rasterTileLayerRDD.polygonalHistogram(geom)
-          histogram.minMaxValues
-          histogram.mean
-        }
-
-        val regionRDD: RDD[MultiPolygon] = sc.parallelize(Array(theRegion.get(polyKeys(0)).get.geom))
-        //Rasterize Vector
-        val geomLayerRDD: RDD[(SpatialKey, Tile)] with Metadata[LayoutDefinition] = regionRDD.rasterize(1, rasterMetaData.cellType, rasterMetaData.layout)
-
-
-        //Joined both RDDs by Spatial Key
-        val joinedRasters = tiledRaster.join(geomLayerRDD)
-        val zonalStatistics = joinedRasters.mapValues(x=> x._1.zonalStatisticsInt(x._2))
-        //The Zonal Statistics returns a map with various stats for each value.
-        val zonalStatisticsValues = zonalStatistics.values
-
-        //Can expand this to other values.  Get max under Polygon.  With one zonal polygon, stats are calculated for value 1 (polygon) and -214747483648 (area outside polygon).
-        //A bit unsure of the statistics surrounding in this step.  It might be more complex than taking the average of the averages/mean of the means for the tiles (?).
-        val i = zonalStatisticsValues.map(x=> x(0))
-        val l = i.map(x=> x.zmax)
-        val maximum = l.max
-
-*/
 
     sc.stop()
   }
