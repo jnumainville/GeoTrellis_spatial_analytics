@@ -72,7 +72,7 @@ object Main {
 
     val vectorDatasets = List(
      //new myVector("states", "/home/david/shapefiles", "states_2.geojson")
-     new myVector("states", "/data/projects/G-818404/shapefiless", "states_2.geojson")
+     new myVector("states", "/data/projects/G-818404/shapefiles", "states_2.geojson")
 
     )
 
