@@ -13,7 +13,7 @@ import geotrellis.vector.io._
 import spray.json._
 import spray.json.DefaultJsonProtocol._
 import geotrellis.raster._
-import local_analysis.rasterdatasets.myRaster
+import datasets.rasterdatasets.myRaster
 //Has TileLayout Object, MultibandTile
 import geotrellis.raster.io.geotiff._
 import geotrellis.raster.render._
@@ -104,27 +104,59 @@ object Main {
         //def MultiPolygonSummaryStats(mp: Map[String,geotrellis.vector.MultiPolygonFeature[Attributes]] :org.apache.spark.rdd.RDD[(geotrellis.spark.SpatialKey, geotrellis.raster.Tile)], oldValue:Int, newValue:Int)  = {
 
         val theMultiPolygonKeys = multiPolygons.keys.toList
-        val thePolygonKeys = multiPolygons.keys.toList
+        val thePolygonKeys = polygons.keys.toList
 
         var ZonalStats = new ListBuffer[Map[String, (Int, Int, Double)]]()
 
         var zonalStatsStart = System.currentTimeMillis()
-        for (i<-0 to theMultiPolygonKeys.length-1){
+
+        var geometries = multiPolygons.mapValues(x=> x.geom)
+        var histogram = geometries.mapValues(x => rasterTileLayerRDD.polygonalHistogram(x))
+        val multiPolyStats = histogram.mapValues(x => x.statistics.toList)  //count.min._1)
+        for( k <- multiPolyStats.keys) {
+          println(multiPolyStats(k))
+        }
+
+/*        for (i<-0 to theMultiPolygonKeys.length-1){
 
           //var geom = multiPolygons.get(theMultiPolygonKeys(0).toString).get.geom
           var geom = multiPolygons.get(theMultiPolygonKeys(i).toString).get.geom
           var histogram = rasterTileLayerRDD.polygonalHistogram(geom)
-          var(theMin, theMax) = histogram.minMaxValues.min
-          var theMean = histogram.mean.min
-          println(theMultiPolygonKeys(i).toString, theMin, theMax, theMean)
+          var theStats = histogram.statistics
+          //var theMean = histogram.mean.min
+          println(theMultiPolygonKeys(i).toString, theStats)
 
-          ZonalStats += Map(theMultiPolygonKeys(i).toString -> (theMin, theMax, theMean))
+          //ZonalStats += Map(theMultiPolygonKeys(i).toString -> (theMin, theMax, theMean))
           //Map("x" -> 24, "y" -> 25, "z" -> 26)
 
+        }*/
+
+
+        var zonalStatsStop = System.currentTimeMillis()
+        var finalTime = zonalStatsStop-zonalStatsStart
+        println("Time to complete: ", finalTime)
+        println("*********** Finished multipolygons ***************")
+
+        zonalStatsStart = System.currentTimeMillis()
+        geometries = polygons.mapValues(x=> x.geom)
+        histogram = geometries.mapValues(x => rasterTileLayerRDD.polygonalHistogram(x))
+        //val polygonMeans = histogram.mapValues(x => x.mean.min)
+        //val polyStats = histogram.mapValues(x => x.statistics)
+        //val (polyMin, polyMax) = histogram.mapValues(x => x.minMaxValues.min)
+        //val polyMin = histogram.mapValues(x => x.minMaxValues.min._1)
+        //val polyMax = histogram.mapValues(x => x.minMaxValues.min._2)
+        val polyStats = histogram.mapValues(x => x.statistics.toList)  //count.min._1)
+        for( k <- polyStats.keys) {
+          println(polyStats(k))
         }
+        //val polyStats = polygonMeans.toList ++ polyMinMax.toList
+        //val polys = polyStats.groupBy(_._1).map{case(k, v) => k -> v.map(_._2).toSeq}
 
-        for (i<-0 to thePolygonKeys.length-1){
 
+
+
+
+/*        for (i<-0 to thePolygonKeys.length-1){
 
           var geom = polygons.get(thePolygonKeys(i).toString).get.geom
           var histogram = rasterTileLayerRDD.polygonalHistogram(geom)
@@ -133,12 +165,12 @@ object Main {
           println(thePolygonKeys(i).toString, theMin, theMax, theMean)
 
           ZonalStats += Map(thePolygonKeys(i).toString -> (theMin, theMax, theMean))
-          //Map("x" -> 24, "y" -> 25, "z" -> 26)
 
-        }
 
-        var zonalStatsStop = System.currentTimeMillis()
-        val finalTime = zonalStatsStop-zonalStatsStart
+        }*/
+
+        zonalStatsStop = System.currentTimeMillis()
+        finalTime = zonalStatsStop-zonalStatsStart
         println("Time to complete: ", finalTime)
 /*        val multiPolygonStats = ZonalStats.toList
         val thePolygonKeys = polygons.keys.toList*/

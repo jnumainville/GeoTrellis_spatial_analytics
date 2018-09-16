@@ -17,7 +17,7 @@ import spray.json.DefaultJsonProtocol._
 import geotrellis.raster._
 import geotrellis.raster.mapalgebra.focal._
 //Square
-import local_analysis.rasterdatasets.myRaster
+import datasets.rasterdatasets.myRaster
 //Has TileLayout Object, MultibandTile
 import geotrellis.raster.io.geotiff._
 import geotrellis.raster.summary.polygonal._
