@@ -75,15 +75,15 @@ object Main {
     //new myVector("regions", "/data/projects/G-818404/shapefiles", "regions_2.geojson"),
     new myVector("states", "/data/projects/G-818404/shapefiles", "states_2.geojson"),
     new myVector("counties", "/data/projects/G-818404/shapefiles", "counties_2.geojson"),
-    new myVector("tracts", "/data/projects/G-818404/shapefiles", "tracts_2.geojson")
+    // new myVector("tracts", "/data/projects/G-818404/shapefiles", "tracts_2.geojson")
 
     )
 
     val tileSizes = Array(25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000) //, 1500, 2000, 2500, 3000, 3500, 4000)
 
-    val outSummaryStats = "/home/david/geotrellis_glc1_stats_zonalstats.csv"
+    val outSummaryStats = "/home/david/geotrellis_glc_stats_zonalstats.csv"
     //val writer = new BufferedWriter(new )
-    val outCSVPath = "/data/projects/G-818404/geotrellis_zonalstats_glc_9_16_2018_12instances.csv" //
+    val outCSVPath = "/data/projects/G-818404/geotrellis_zonalstats_glc2_9_16_2018_12instances.csv" //
     val writer = new PrintWriter(new File(outCSVPath))
     writer.write("analytic,raster_dataset,tilesize,vector_dataset,total_time,multipolygon_time, polygon_time, run\n")
 
@@ -125,14 +125,15 @@ object Main {
 
             var zonalStatsStart = System.currentTimeMillis()
 
+            /*          
             val multiGeom = multiPolygons.mapValues(x => x.geom)
             val multiHistogram = multiGeom.mapValues(x => rasterTileLayerRDD.polygonalHistogram(x))
             val multiPolyStats = multiHistogram.mapValues(x => x.statistics.toList)
             for (k <- multiPolyStats.keys) {
               println(k, multiPolyStats(k))
-            }
+            }*/
 
-            /*        for (i<-0 to theMultiPolygonKeys.length-1){
+            for (i<-0 to theMultiPolygon.keys.length-1){
 
               //var geom = multiPolygons.get(theMultiPolygonKeys(0).toString).get.geom
               var geom = multiPolygons.get(theMultiPolygonKeys(i).toString).get.geom
@@ -144,7 +145,7 @@ object Main {
               //ZonalStats += Map(theMultiPolygonKeys(i).toString -> (theMin, theMax, theMean))
               //Map("x" -> 24, "y" -> 25, "z" -> 26)
 
-            }*/
+            }
 
 
             var zonalStatsStop = System.currentTimeMillis()
@@ -153,32 +154,25 @@ object Main {
             println("*********** Finished multipolygons ***************")
 
             zonalStatsStart = System.currentTimeMillis()
+
+            /*
             val polyGeom = polygons.mapValues(x => x.geom)
-            val polyHistogram = polyGeom.mapValues(x => rasterTileLayerRDD.polygonalHistogram(x))
-            //val polygonMeans = histogram.mapValues(x => x.mean.min)
-            //val polyStats = histogram.mapValues(x => x.statistics)
-            //val (polyMin, polyMax) = histogram.mapValues(x => x.minMaxValues.min)
-            //val polyMin = histogram.mapValues(x => x.minMaxValues.min._1)
-            //val polyMax = histogram.mapValues(x => x.minMaxValues.min._2)
+            val polyHistogram = polyGeom.mapValues(x => rasterTileLayerRDD.
             val polyStats = polyHistogram.mapValues(x => x.statistics.toList) //count.min._1)
             for (k <- polyStats.keys) {
               println(k, polyStats(k))
+            }*/
+
+
+            for (i<-0 to thePolygon.keys.length-1){
+
+              var geom = polygons.get(thePolygonKeys(i).toString).get.geom
+              var histogram = rasterTileLayerRDD.polygonalHistogram(geom)
+              var theStats = histogram.statistics
+              println(thePolygonKeys(i).toString, theStats)
+
+              //ZonalStats += Map(thePolygonKeys(i).toString -> (theMin, theMax, theMean))
             }
-
-
-
-            /*        for (i<-0 to thePolygonKeys.length-1){
-
-            var geom = polygons.get(thePolygonKeys(i).toString).get.geom
-            var histogram = rasterTileLayerRDD.polygonalHistogram(geom)
-            var(theMin, theMax) = histogram.minMaxValues.min
-            var theMean = histogram.mean.min
-            println(thePolygonKeys(i).toString, theMin, theMax, theMean)
-
-            ZonalStats += Map(thePolygonKeys(i).toString -> (theMin, theMax, theMean))
-
-
-          }*/
 
             zonalStatsStop = System.currentTimeMillis()
             var polygonTime = zonalStatsStop - zonalStatsStart
@@ -193,7 +187,7 @@ object Main {
 
 
             /*        val multiPolygonStats = ZonalStats.toList
-          val thePolygonKeys = polygons.keys.toList*/
+            val thePolygonKeys = polygons.keys.toList*/
             // ZonalStats.toList.foreach(writer.write)
 
           } //vector
