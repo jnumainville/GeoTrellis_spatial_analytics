@@ -74,7 +74,7 @@ object Main {
     //new myVector("states", "/home/david/shapefiles", "states_2.geojson")
     //new myVector("regions", "/data/projects/G-818404/shapefiles", "regions_2.geojson"),
     new myVector("states", "/data/projects/G-818404/shapefiles", "states_2.geojson"),
-    new myVector("counties", "/data/projects/G-818404/shapefiles", "counties_2.geojson"),
+    new myVector("counties", "/data/projects/G-818404/shapefiles", "counties_2.geojson")
     // new myVector("tracts", "/data/projects/G-818404/shapefiles", "tracts_2.geojson")
 
     )
@@ -133,17 +133,17 @@ object Main {
               println(k, multiPolyStats(k))
             }*/
 
-            for (i<-0 to theMultiPolygon.keys.length-1){
+            val theMultiPolygonsKeys = multiPolygons.keys.toList
+            for (i<-0 to theMultiPolygonsKeys.length-1){
 
-              //var geom = multiPolygons.get(theMultiPolygonKeys(0).toString).get.geom
-              var geom = multiPolygons.get(theMultiPolygonKeys(i).toString).get.geom
+              var geom = multiPolygons.get(theMultiPolygonsKeys(i).toString).get.geom
               var histogram = rasterTileLayerRDD.polygonalHistogram(geom)
               var theStats = histogram.statistics
-              //var theMean = histogram.mean.min
-              println(theMultiPolygonKeys(i).toString, theStats)
 
-              //ZonalStats += Map(theMultiPolygonKeys(i).toString -> (theMin, theMax, theMean))
-              //Map("x" -> 24, "y" -> 25, "z" -> 26)
+              println(theMultiPolygonsKeys(i).toString, theStats)
+
+              /*ZonalStats += Map(theMultiPolygonsKeys(i).toString -> (theMin, theMax, theMean))
+              Map("x" -> 24, "y" -> 25, "z" -> 26)*/
 
             }
 
@@ -163,15 +163,15 @@ object Main {
               println(k, polyStats(k))
             }*/
 
+            val thePolygonsKeys = polygons.keys.toList
+            for (i<-0 to thePolygonsKeys.length-1){
 
-            for (i<-0 to thePolygon.keys.length-1){
-
-              var geom = polygons.get(thePolygonKeys(i).toString).get.geom
+              var geom = polygons.get(thePolygonsKeys(i).toString).get.geom
               var histogram = rasterTileLayerRDD.polygonalHistogram(geom)
               var theStats = histogram.statistics
-              println(thePolygonKeys(i).toString, theStats)
+              println(thePolygonsKeys(i).toString, theStats)
 
-              //ZonalStats += Map(thePolygonKeys(i).toString -> (theMin, theMax, theMean))
+              //ZonalStats += Map(thePolygonsKeys(i).toString -> (theMin, theMax, theMean))
             }
 
             zonalStatsStop = System.currentTimeMillis()
