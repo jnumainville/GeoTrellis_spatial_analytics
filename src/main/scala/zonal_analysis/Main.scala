@@ -75,7 +75,7 @@ object Main {
     //new myVector("regions", "/data/projects/G-818404/shapefiles", "regions_2.geojson"),
     new myVector("states", "/data/projects/G-818404/shapefiles", "states_2.geojson"),
     new myVector("counties", "/data/projects/G-818404/shapefiles", "counties_2.geojson")
-    // new myVector("tracts", "/data/projects/G-818404/shapefiles", "tracts_2.geojson")
+    //new myVector("tracts", "/data/projects/G-818404/shapefiles", "tracts_2.geojson")
 
     )
 
@@ -83,7 +83,7 @@ object Main {
 
     val outSummaryStats = "/home/david/geotrellis_glc_stats_zonalstats.csv"
     //val writer = new BufferedWriter(new )
-    val outCSVPath = "/data/projects/G-818404/geotrellis_zonalstats_glc2_9_16_2018_12instances.csv" //
+    val outCSVPath = "/data/projects/G-818404/geotrellis_zonalstats_glc_9_16_2018_12instances.csv" //
     val writer = new PrintWriter(new File(outCSVPath))
     writer.write("analytic,raster_dataset,tilesize,vector_dataset,total_time,multipolygon_time, polygon_time, run\n")
 
@@ -113,8 +113,8 @@ object Main {
             println(jsonPath)
             //val jsonPath = vectorDatasets(0)._2
             val theJSON = scala.io.Source.fromFile(jsonPath).getLines.mkString
-            case class Attributes(NAME: String, LSAD: String, AFFGEOID: String, ALAND: Int, AWATER: Int, ID: Int)
-            implicit val boxedToRead = jsonFormat6(Attributes)
+            case class Attributes(NAME: String, LSAD: String, ID: Int)
+            implicit val boxedToRead = jsonFormat3(Attributes)
 
             // GeoTrellis does not handle both multipolygons and polgyons in the same function
             val multiPolygons: Map[String, MultiPolygonFeature[Attributes]] = theJSON.parseGeoJson[JsonFeatureCollectionMap].getAllMultiPolygonFeatures[Attributes]
@@ -183,7 +183,7 @@ object Main {
 
             println(s"Total Time to complete: $totalTime for $rasterName with tilesize $tilesize on vector $vectorName")
 
-            writer.write("polygonal_summary,$rasterName,$tilesize,$vectorName,$totalTime,$multiPolygonTime, $polygonTime, $theRun\n")
+            writer.write(s"polygonal_summary,$rasterName,$tilesize,$vectorName,$totalTime,$multiPolygonTime, $polygonTime, $theRun\n")
 
 
             /*        val multiPolygonStats = ZonalStats.toList
@@ -195,7 +195,7 @@ object Main {
       }//tile
     }//raster
 
-
+    writer.close()
     sc.stop()
   }
 
