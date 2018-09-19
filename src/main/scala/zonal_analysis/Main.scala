@@ -63,24 +63,27 @@ object Main {
     //Raster Dataset Path
     val rasterDatasets = List(
     //new myRaster("glc", "/home/david/Downloads/glc2000.tif", 16, 1, 4326),
-    new myRaster("glc", "/data/projects/G-818404/glc2000_clipped.tif", 16, 1),
-    new myRaster("meris", "/data/projects/G-818404/meris_2010_clipped.tif", 100, 1),
+    new myRaster("glc", "/data/projects/G-818404/glc2000_clipped.tif", 16, 1)
+    //new myRaster("meris", "/data/projects/G-818404/meris_2010_clipped.tif", 100, 1),
     //new myRaster("nlcd", "/home/david/Downloads/nlcd_2006.tif", 21, 1, 5070)
-    new myRaster("nlcd", "/data/projects/G-818404/nlcd_2006.tif", 21, 1)
+    //new myRaster("nlcd", "/data/projects/G-818404/nlcd_2006.tif", 21, 1)
     //new rasterdataset("meris_3m", "/data/projects/G-818404/meris_2010_clipped_3m/", 100, 1)
     )
 
     val vectorDatasets = List(
-     //new myVector("states", "/home/david/shapefiles", "states_2.geojson")
-     new myVector("states", "/data/projects/G-818404/shapefiles", "states_2.geojson")
+    //new myVector("states", "/home/david/shapefiles", "states_2.geojson")
+    //new myVector("regions", "/data/projects/G-818404/shapefiles", "regions_2.geojson"),
+    new myVector("states", "/data/projects/G-818404/shapefiles", "states_2.geojson"),
+    new myVector("counties", "/data/projects/G-818404/shapefiles", "counties_2.geojson"),
+    new myVector("tracts", "/data/projects/G-818404/shapefiles", "tracts_2.geojson")
 
     )
 
     val tileSizes = Array(25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000) //, 1500, 2000, 2500, 3000, 3500, 4000)
 
-    val outSummaryStats = "/home/david/geotrellis_glc_stats_zonalstats.csv"
+    val outSummaryStats = "/home/david/geotrellis_glc1_stats_zonalstats.csv"
     //val writer = new BufferedWriter(new )
-    val outCSVPath = "/data/projects/G-818404/geotrellis_zonalstatst_9_16_2018_12instances.csv" //
+    val outCSVPath = "/data/projects/G-818404/geotrellis_zonalstats_glc_9_16_2018_12instances.csv" //
     val writer = new PrintWriter(new File(outCSVPath))
     writer.write("analytic,raster_dataset,tilesize,vector_dataset,total_time,multipolygon_time, polygon_time, run\n")
 
@@ -97,7 +100,8 @@ object Main {
         val (_, rasterMetaData) = TileLayerMetadata.fromRdd(rasterRDD, FloatingLayoutScheme(tilesize))
         val tiledRaster: RDD[(SpatialKey, geotrellis.raster.Tile)] = rasterRDD.tileToLayout(rasterMetaData.cellType, rasterMetaData.layout)
         val rasterTileLayerRDD: TileLayerRDD[SpatialKey] = ContextRDD(tiledRaster, rasterMetaData)
-
+        var rasterName = ""
+        var vectorName = ""
         //Removing other RDD
         rasterRDD.unpersist()
         tiledRaster.unpersist()
@@ -106,6 +110,7 @@ object Main {
           for (v <- vectorDatasets) {
             // val file: String = "/home/david/shapefiles/4326/states_2.geojson" //"data/censusMetroNew.geojson"
             var jsonPath = v.theBasePath + "/" + r.srid + "/" + v.theJSON
+            println(jsonPath)
             //val jsonPath = vectorDatasets(0)._2
             val theJSON = scala.io.Source.fromFile(jsonPath).getLines.mkString
             case class Attributes(NAME: String, LSAD: String, AFFGEOID: String, ALAND: Int, AWATER: Int, ID: Int)
@@ -179,9 +184,12 @@ object Main {
             var polygonTime = zonalStatsStop - zonalStatsStart
             println("Time to complete polygons: ", polygonTime)
             var totalTime = polygonTime + multiPolygonTime
-            println(s"Total Time to complete: $totalTime for $r.name with tilesize $tilesize on vector $v.name")
+            rasterName = r.name
+            vectorName = v.name
 
-            writer.write("polygonal_summary,$r.name,$tilesize,$v.name,$totalTime,$multiPolygonTime, $polygonTime, $theRun\n")
+            println(s"Total Time to complete: $totalTime for $rasterName with tilesize $tilesize on vector $vectorName")
+
+            writer.write("polygonal_summary,$rasterName,$tilesize,$vectorName,$totalTime,$multiPolygonTime, $polygonTime, $theRun\n")
 
 
             /*        val multiPolygonStats = ZonalStats.toList
