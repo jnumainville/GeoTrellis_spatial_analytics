@@ -63,19 +63,19 @@ object Main {
     //Raster Dataset Path
     val rasterDatasets = List(
     //new myRaster("glc", "/home/david/Downloads/glc2000.tif", 16, 1, 4326),
-    new myRaster("glc", "/data/projects/G-818404/glc2000_clipped.tif", 16, 1)
-    //new myRaster("meris", "/data/projects/G-818404/meris_2010_clipped.tif", 100, 1),
-    //new myRaster("nlcd", "/home/david/Downloads/nlcd_2006.tif", 21, 1, 5070)
+    //new myRaster("glc", "/data/projects/G-818404/glc2000_clipped.tif", 16, 1)
+    new myRaster("meris", "/data/projects/G-818404/meris_2010_clipped.tif", 100, 1),
+    new myRaster("nlcd", "/home/david/Downloads/nlcd_2006.tif", 21, 1, 5070)
     //new myRaster("nlcd", "/data/projects/G-818404/nlcd_2006.tif", 21, 1)
     //new rasterdataset("meris_3m", "/data/projects/G-818404/meris_2010_clipped_3m/", 100, 1)
     )
 
     val vectorDatasets = List(
     //new myVector("states", "/home/david/shapefiles", "states_2.geojson")
-    //new myVector("regions", "/data/projects/G-818404/shapefiles", "regions_2.geojson"),
+    // new myVector("regions", "/data/projects/G-818404/shapefiles", "regions_2.geojson"),
     new myVector("states", "/data/projects/G-818404/shapefiles", "states_2.geojson"),
-    new myVector("counties", "/data/projects/G-818404/shapefiles", "counties_2.geojson")
-    //new myVector("tracts", "/data/projects/G-818404/shapefiles", "tracts_2.geojson")
+    new myVector("counties", "/data/projects/G-818404/shapefiles", "counties_2.geojson"),
+    new myVector("tracts", "/data/projects/G-818404/shapefiles", "tracts_2.geojson")
 
     )
 
@@ -83,7 +83,7 @@ object Main {
 
     val outSummaryStats = "/home/david/geotrellis_glc_stats_zonalstats.csv"
     //val writer = new BufferedWriter(new )
-    val outCSVPath = "/data/projects/G-818404/geotrellis_zonalstats_glc_9_16_2018_12instances.csv" //
+    val outCSVPath = "/data/projects/G-818404/geotrellis_zonalstats_meris_nlcd_for_9_26_2018_12instances.csv" //
     val writer = new PrintWriter(new File(outCSVPath))
     writer.write("analytic,raster_dataset,tilesize,vector_dataset,total_time,multipolygon_time, polygon_time, run\n")
 
@@ -113,8 +113,8 @@ object Main {
             println(jsonPath)
             //val jsonPath = vectorDatasets(0)._2
             val theJSON = scala.io.Source.fromFile(jsonPath).getLines.mkString
-            case class Attributes(NAME: String, LSAD: String, ID: Int)
-            implicit val boxedToRead = jsonFormat3(Attributes)
+            case class Attributes(NAME: String, ID: Int)
+            implicit val boxedToRead = jsonFormat2(Attributes)
 
             // GeoTrellis does not handle both multipolygons and polgyons in the same function
             val multiPolygons: Map[String, MultiPolygonFeature[Attributes]] = theJSON.parseGeoJson[JsonFeatureCollectionMap].getAllMultiPolygonFeatures[Attributes]
@@ -131,7 +131,8 @@ object Main {
             val multiPolyStats = multiHistogram.mapValues(x => x.statistics.toList)
             for (k <- multiPolyStats.keys) {
               println(k, multiPolyStats(k))
-            }*/
+            }
+            */
 
             val theMultiPolygonsKeys = multiPolygons.keys.toList
             for (i<-0 to theMultiPolygonsKeys.length-1){
@@ -146,7 +147,7 @@ object Main {
               Map("x" -> 24, "y" -> 25, "z" -> 26)*/
 
             }
-
+            
 
             var zonalStatsStop = System.currentTimeMillis()
             var multiPolygonTime = zonalStatsStop - zonalStatsStart
@@ -157,12 +158,13 @@ object Main {
 
             /*
             val polyGeom = polygons.mapValues(x => x.geom)
-            val polyHistogram = polyGeom.mapValues(x => rasterTileLayerRDD.
-            val polyStats = polyHistogram.mapValues(x => x.statistics.toList) //count.min._1)
+            val polyHistogram = polyGeom.mapValues(x => rasterTileLayerRDD.polygonalHistogram(x))
+            val polyStats = polyHistogram.mapValues(x => x.statistics.toList) 
             for (k <- polyStats.keys) {
               println(k, polyStats(k))
-            }*/
-
+            }
+            */
+            
             val thePolygonsKeys = polygons.keys.toList
             for (i<-0 to thePolygonsKeys.length-1){
 
@@ -173,7 +175,7 @@ object Main {
 
               //ZonalStats += Map(thePolygonsKeys(i).toString -> (theMin, theMax, theMean))
             }
-
+        
             zonalStatsStop = System.currentTimeMillis()
             var polygonTime = zonalStatsStop - zonalStatsStart
             println("Time to complete polygons: ", polygonTime)
