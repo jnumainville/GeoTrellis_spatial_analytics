@@ -112,6 +112,7 @@ object two_raster_add {
         }
       }
     }
-
+    writer.close()
+    sc.stop()
   }//main
 }
