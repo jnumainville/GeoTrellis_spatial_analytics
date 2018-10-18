@@ -47,10 +47,10 @@ object two_raster_add {
      This is lazy evaluated*/
     val outputRaster = r1 + r2
 
-    //expanding to addition of n rasters, can be done with List(a, b, c).localAdd
+    //expanding this to n rasters, can be done with List(a, b, c).localAdd
 
     var (countTime, numPixels) = countPixelsSpark(pixelValue, outputRaster)
-    println(s"Found of $numPixels for value: $pixelValue ")
+    println(s"Found $numPixels pixels for value: $pixelValue ")
     var rasterAddStop = System.currentTimeMillis()
     val addingTime: Double = rasterAddStop - rasterAddStart
     //Could return countTime, too if that calculation is being done.
@@ -82,21 +82,34 @@ object two_raster_add {
     val conf = new SparkConf().setMaster("local[2]").setAppName("Zonal Stats").set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").set("spark.kryo.regisintrator", "geotrellis.spark.io.kryo.KryoRegistrator")
 
     implicit val sc = new SparkContext(conf)
+    for (x <- 1 to 3){
 
-    for (r <- rasterDatasets) {
-      val pValue = r.pixelValue * 2
+      for (r <- rasterDatasets) {
+        val pValue = r.pixelValue * 2
+        var datasetName : String = r.name
 
-      for (tilesize <- tileSizes) {
-        //val tilesize = 250
+        for (tilesize <- tileSizes) {
+          //val tilesize = 250
 
-        //val geoTiff: SinglebandGeoTiff = SinglebandGeoTiff(r.thePath)
-        val rasterRDD: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(new Path(r.thePath), HadoopGeoTiffRDD.Options.DEFAULT)
-        val (_, rasterMetaData) = TileLayerMetadata.fromRdd(rasterRDD, FloatingLayoutScheme(tilesize))
-        val raster1: RDD[(SpatialKey, geotrellis.raster.Tile)] = rasterRDD.tileToLayout(rasterMetaData.cellType, rasterMetaData.layout)
-        val raster2: RDD[(SpatialKey, geotrellis.raster.Tile)] = rasterRDD.tileToLayout(rasterMetaData.cellType, rasterMetaData.layout)
+          //val geoTiff: SinglebandGeoTiff = SinglebandGeoTiff(r.thePath)
+          val rasterRDD: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(new Path(r.thePath), HadoopGeoTiffRDD.Options.DEFAULT)
+          val (_, rasterMetaData) = TileLayerMetadata.fromRdd(rasterRDD, FloatingLayoutScheme(tilesize))
+          val raster1: RDD[(SpatialKey, geotrellis.raster.Tile)] = rasterRDD.tileToLayout(rasterMetaData.cellType, rasterMetaData.layout)
+          val raster2: RDD[(SpatialKey, geotrellis.raster.Tile)] = rasterRDD.tileToLayout(rasterMetaData.cellType, rasterMetaData.layout)
 
-        var (addTime, calcRaster) = twoRasterAdd(raster1, raster2, pValue)
-        println(addTime)
+          var (memoryTime, calcRaster) = twoRasterAdd(raster1, raster2, pValue)
+          println(memoryTime)
+
+          writer.write(s"two_raster_add,$datasetName,$tilesize,$memoryTime,memory,$x\n")
+
+          var (cachedTime, calcCachedRaster) = twoRasterAdd(raster1, raster2, pValue)
+          println(cachedTime)
+          writer.write(s"two_raster_add,$datasetName,$tilesize,$cachedTime,cached,$x\n")
+          raster1.unpersist()
+          raster2.unpersist()
+
+
+        }
       }
     }
 

@@ -67,23 +67,6 @@ object CountPixels{
   }
 
 
-  def reclassifyRaster(theRaster:org.apache.spark.rdd.RDD[(geotrellis.spark.SpatialKey, geotrellis.raster.Tile)], oldValue:Int, newValue:Int) : Double = {
-    //Function for reclassifying raster
-
-    //Type for evaluation statement
-    type MyType = Int => Boolean
-    var equalpixelvalue: MyType = (x: Int) => x == oldValue
-
-    var reclassPixelStart = System.currentTimeMillis()
-    var reclassedRaster = theRaster.localIf(equalpixelvalue, newValue, -999)
-    var numReclassPixels = countPixelsSpark(newValue, reclassedRaster)
-    var reclassPixelStop = System.currentTimeMillis()
-    reclassedRaster.unpersist()
-    val reclassTime = reclassPixelStop - reclassPixelStart
-    reclassTime
-  }
-
-
   def main(args: Array[String]): Unit = {
 
     Logger.getLogger("org.apache.spark").setLevel(Level.ERROR)
@@ -117,15 +100,7 @@ object CountPixels{
 
           val rasterRDD: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(new Path(r.thePath), HadoopGeoTiffRDD.Options.DEFAULT)
           val pValue = r.pixelValue
-
-          //chunkSize = Some(250),
-          //var rasterOptions = HadoopGeoTiffRDD.Options( crs = Some(geotrellis.proj4.CRS.fromEpsgCode(4326)), maxTileSize = Some(250))
-          //maxTileSize does not seem to create evenly spaced chunks
-          //chunkSize seems to attempt to create evenly spaced, but some are bigger.
-          //val rasterRDD2: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(new Path(r.thePath), rasterOptions)
-          //10112
-          //161*65
-
+          //Spark anonymous _
           val (_,rasterMetaData) = TileLayerMetadata.fromRdd(rasterRDD, FloatingLayoutScheme(tilesize))
           //val ld = LayoutDefinition(geoTiff.rasterExtent, tilesize)
           val tiledRaster: RDD[(SpatialKey,geotrellis.raster.Tile)] = rasterRDD.tileToLayout(rasterMetaData.cellType, rasterMetaData.layout)
@@ -135,7 +110,6 @@ object CountPixels{
           var datasetName : String = r.name
 
           //Call Spark Function to count pixels
-
           var (memoryTime, numMemoryPixels) = countPixelsSpark(pValue, tiledRaster)
           writer.write(s"pixlecount,$datasetName,$tilesize,$memoryTime,memory,$x\n")
 
