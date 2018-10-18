@@ -51,6 +51,7 @@ import spray.json.DefaultJsonProtocol._
 import scala.io.StdIn
 import java.io.File
 import java.io._
+import org.apache.hadoop.fs.Path
 import scala.collection.mutable.ListBuffer
 import org.apache.log4j.{Level, Logger}
 

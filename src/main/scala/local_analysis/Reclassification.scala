@@ -53,7 +53,7 @@ import datasets.rasterdatasets.myRaster
 import org.apache.log4j.{Level, Logger}
 
 
-object ReclassifyTiff{
+object Reclassification{
   //Class for testing raster local operation pixel count
 
   def countPixels(a:Int, b:geotrellis.raster.Tile) : Int = {

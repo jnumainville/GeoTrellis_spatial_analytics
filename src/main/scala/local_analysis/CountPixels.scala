@@ -20,7 +20,6 @@ import geotrellis.raster.rasterize._
 import geotrellis.raster.rasterize.polygon._
 import geotrellis.raster.mapalgebra.local._
 // import geotrellis.proj4._
-
 import geotrellis.spark._
 import geotrellis.spark.io._
 import geotrellis.spark.io.file._
@@ -30,23 +29,15 @@ import geotrellis.spark.pyramid._
 import geotrellis.spark.reproject._
 import geotrellis.spark.tiling._
 import geotrellis.spark.render._
-
 //Vector Json
 import geotrellis.vector._
 import geotrellis.vector.io._
 import geotrellis.vector.io.json._
-
 //ProjectedExtent object
 import org.apache.spark._
 import org.apache.spark.rdd._
-
 import org.apache.spark.HashPartitioner
 import org.apache.spark.rdd.RDD
-
-//Libraries for reading a json
-import spray.json._
-import spray.json.DefaultJsonProtocol._
-
 import scala.io.StdIn
 import java.io.File
 import java.io._
@@ -54,7 +45,7 @@ import datasets.rasterdatasets.myRaster
 import org.apache.hadoop.fs.Path
 
 
-object CountGeoTiff{
+object CountPixels{
   //Class for testing raster local operation pixel count
 
 
@@ -96,6 +87,7 @@ object CountGeoTiff{
   def main(args: Array[String]): Unit = {
 
     Logger.getLogger("org.apache.spark").setLevel(Level.ERROR)
+
     val rasterDatasets = List(
       new myRaster("glc", "/home/david/Downloads/glc2000.tif", 16, 1)
       /* new myRaster("glc", "/data/projects/G-818404/glc2000_clipped.tif", 16, 1),
@@ -147,7 +139,7 @@ object CountGeoTiff{
           var (memoryTime, numMemoryPixels) = countPixelsSpark(pValue, tiledRaster)
           writer.write(s"pixlecount,$datasetName,$tilesize,$memoryTime,memory,$x\n")
 
-          //Call Spark Fucntion again to get the cached time
+          //Call Spark Function again to get the cached time
           var (cachedTime, numCachedPixels) = countPixelsSpark(pValue, tiledRaster)
           writer.write(s"pixlecount,$datasetName,$tilesize,$cachedTime,cache,$x\n")
    
