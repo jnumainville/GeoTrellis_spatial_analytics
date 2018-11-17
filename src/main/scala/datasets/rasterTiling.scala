@@ -1,17 +1,57 @@
 package datasets
 
-import datasets.rasterdatasets.myRaster
-import geotrellis.raster.Tile
-import geotrellis.spark.{SpatialKey, TileLayerMetadata}
-import geotrellis.spark.io.hadoop.HadoopGeoTiffRDD
-import geotrellis.spark.tiling.{FloatingLayoutScheme, LayoutDefinition}
-import geotrellis.vector.ProjectedExtent
-import org.apache.hadoop.fs.Path
-import org.apache.log4j.{Level, Logger}
-import org.apache.spark.rdd.RDD
-import org.apache.spark.{SparkConf, SparkContext}
+import geotrellis.raster._
+import geotrellis.spark.TileLayerMetadata
+import scala.io.StdIn.{readLine,readInt}
+import geotrellis.raster.io.geotiff.reader.GeoTiffReader
 //Has TileLayout Object, MultibandTile
 import geotrellis.raster.io.geotiff._
+import scala.io.Source
+import geotrellis.vector._
+import geotrellis.vector.io._
+
+import geotrellis.raster.render._
+import geotrellis.raster.resample._
+import geotrellis.raster.reproject._
+
+import geotrellis.raster.summary.polygonal._
+import geotrellis.raster.rasterize._
+import geotrellis.raster.rasterize.polygon._
+import geotrellis.raster.mapalgebra.local._
+// import geotrellis.proj4._
+
+import geotrellis.spark._
+import geotrellis.spark.io._
+import geotrellis.spark.io.file._
+import geotrellis.spark.io.hadoop._
+import geotrellis.spark.io.index._
+import geotrellis.spark.pyramid._
+import geotrellis.spark.reproject._
+import geotrellis.spark.tiling._
+import geotrellis.spark.render._
+
+//Vector Json
+import geotrellis.vector._
+import geotrellis.vector.io._
+import geotrellis.vector.io.json._
+
+//ProjectedExtent object
+import org.apache.spark._
+import org.apache.spark.rdd._
+
+import org.apache.spark.HashPartitioner
+import org.apache.spark.rdd.RDD
+
+//Libraries for reading a json
+import spray.json._
+import spray.json.DefaultJsonProtocol._
+
+import scala.io.StdIn
+import java.io.File
+import java.io._
+import datasets.rasterdatasets.myRaster
+import org.apache.log4j.{Level, Logger}
+import org.apache.hadoop.fs.Path
 
 object rasterTiling {
 
@@ -32,15 +72,36 @@ object rasterTiling {
     implicit val sc = new SparkContext(conf)
 
     val r = rasterDatasets(0)
-    println(r.thePath)
+
     val rasterRDD: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(new Path(r.thePath), HadoopGeoTiffRDD.Options.DEFAULT)
 
-    //val rasterRDD: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(new Path(r.thePath), HadoopGeoTiffRDD.Options.DEFAULT)
-    val pValue = r.pixelValue
-
+    //Tile Layout
     val (_,rasterMetaData) = TileLayerMetadata.fromRdd(rasterRDD,FloatingLayoutScheme(tileSize = 300))
+    val tiledRaster: RDD[(SpatialKey,geotrellis.raster.Tile)] = rasterRDD.tileToLayout(rasterMetaData.cellType, rasterMetaData.layout)
 
-    //val tiledRaster: RDD[(SpatialKey,geotrellis.raster.Tile)] = rasterRDD.tileToLayout(rasterMetaData.cellType, rasterMetaData.layout)
+    //tiledRaster has the properties .dimensions and .size (no. of pixels) which might be useful.
+    var dimensionsRDD = tiledRaster.mapValues(x=>x.dimensions)
+    var sizeRDD = tiledRaster.mapValues(x=>x.size)
+    var tileSizesRDD = sizeRDD.collect()
+    sizeRDD.map(x => x._2.toString()).saveAsTextFile("/media/sf_data/glc_layouttilesize")
+    println(tiledRaster.count())
+
+    val rasterRDD2: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(new Path(r.thePath), HadoopGeoTiffRDD.Options(chunkSize= Some(300)) )
+    val dimensionsRDD2 = rasterRDD2.mapValues(x => x.dimensions)
+    dimensionsRDD2.mapValues(x => x._2.toString()).saveAsTextFile("/media/sf_data/glc_chunkSize")
+    println(rasterRDD2.count())
+
+    val rasterRDD3: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(new Path(r.thePath), HadoopGeoTiffRDD.Options(maxTileSize = Some(300)) )
+    val dimensionsRDD3 = rasterRDD3.mapValues(x => x.dimensions)
+    dimensionsRDD3.mapValues(x => x._2.toString()).saveAsTextFile("/media/sf_data/glc_maxTile1Size")
+    println(rasterRDD3.count())
+
+
+
+
+    //val df = sizeRDD.map{ case(k, tileSize) => (k.toString, tileSize.toString) }.
+
+
 
 
     //val (_,rasterMetaData) = TileLayerMetadata.fromRdd(rasterRDD, FloatingLayoutScheme(300))
