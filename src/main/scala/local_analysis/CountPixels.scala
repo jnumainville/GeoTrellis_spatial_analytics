@@ -100,9 +100,11 @@ object CountPixels{
 
           val rasterRDD: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(new Path(r.thePath), HadoopGeoTiffRDD.Options.DEFAULT)
           val pValue = r.pixelValue
+
           //Spark anonymous _
           val (_,rasterMetaData) = TileLayerMetadata.fromRdd(rasterRDD, FloatingLayoutScheme(tilesize))
           //val ld = LayoutDefinition(geoTiff.rasterExtent, tilesize)
+
           val tiledRaster: RDD[(SpatialKey,geotrellis.raster.Tile)] = rasterRDD.tileToLayout(rasterMetaData.cellType, rasterMetaData.layout)
 
           // remove original RDD with variable tiling from memory
