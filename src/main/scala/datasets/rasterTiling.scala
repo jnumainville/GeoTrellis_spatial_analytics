@@ -82,18 +82,21 @@ object rasterTiling {
     //tiledRaster has the properties .dimensions and .size (no. of pixels) which might be useful.
     var dimensionsRDD = tiledRaster.mapValues(x=>x.dimensions)
     var sizeRDD = tiledRaster.mapValues(x=>x.size)
-    var tileSizesRDD = sizeRDD.collect()
-    sizeRDD.map(x => x._2.toString()).saveAsTextFile("/media/sf_data/glc_layouttilesize")
+    sizeRDD.map(x => x._1.extent(rasterMetaData.layout).toString() + "," + x._2.toString()).saveAsTextFile("/media/sf_data/glc_layouttilesize")
     println(tiledRaster.count())
 
     val rasterRDD2: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(new Path(r.thePath), HadoopGeoTiffRDD.Options(chunkSize= Some(300)) )
     val dimensionsRDD2 = rasterRDD2.mapValues(x => x.dimensions)
-    dimensionsRDD2.mapValues(x => x._2.toString()).saveAsTextFile("/media/sf_data/glc_chunkSize")
+    dimensionsRDD2.mapValues(x => x._1 + "," + x._2.toString()).saveAsTextFile("/media/sf_data/glc_chunkSize")
+    rasterRDD2.mapValues(x => x.size.toString()).saveAsTextFile(path="/media/sf_data/glc_chunksize_size")
+    //sizeRDD = tiledRaster.mapValues(x=>x.size)
+    //sizeRDD.mapValues(x => x.toString()).saveAsTextFile("/media/sf_data/glc_chunkSize")
     println(rasterRDD2.count())
 
     val rasterRDD3: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(new Path(r.thePath), HadoopGeoTiffRDD.Options(maxTileSize = Some(300)) )
     val dimensionsRDD3 = rasterRDD3.mapValues(x => x.dimensions)
-    dimensionsRDD3.mapValues(x => x._2.toString()).saveAsTextFile("/media/sf_data/glc_maxTile1Size")
+    dimensionsRDD3.mapValues(x => x._1 + "," + x._2.toString()).saveAsTextFile("/media/sf_data/glc_maxTileSize")
+    rasterRDD3.mapValues(x => x.size.toString()).saveAsTextFile(path="/media/sf_data/glc_maxTileSize_size")
     println(rasterRDD3.count())
 
 
