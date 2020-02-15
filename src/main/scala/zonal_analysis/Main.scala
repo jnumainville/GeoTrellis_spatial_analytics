@@ -83,7 +83,6 @@ object Main {
     val tileSizes = Array(25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000) //, 1500, 2000, 2500, 3000, 3500, 4000)
 
     val outSummaryStats = "/home/david/geotrellis_glc_stats_zonalstats.csv"
-    //val writer = new BufferedWriter(new )
     val outCSVPath = "/data/projects/G-818404/geotrellis_zonalstats_meris_nlcd_for_9_26_2018_12instances.csv" //
     val writer = new PrintWriter(new File(outCSVPath))
     writer.write("analytic,raster_dataset,tilesize,vector_dataset,total_time,multipolygon_time, polygon_time, run\n")
@@ -94,9 +93,7 @@ object Main {
     for(r<-rasterDatasets) {
 
       for (tilesize <- tileSizes) {
-        //val tilesize = 250
 
-        //val geoTiff: SinglebandGeoTiff = SinglebandGeoTiff(r.thePath)
         val rasterRDD: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(r.thePath, HadoopGeoTiffRDD.Options.DEFAULT)
         val (_, rasterMetaData) = TileLayerMetadata.fromRdd(rasterRDD, FloatingLayoutScheme(tilesize))
         val tiledRaster: RDD[(SpatialKey, geotrellis.raster.Tile)] = rasterRDD.tileToLayout(rasterMetaData.cellType, rasterMetaData.layout)
@@ -107,12 +104,9 @@ object Main {
         rasterRDD.unpersist()
         tiledRaster.unpersist()
         for (theRun <- 1 to 3) {
-          //val theRun = 1
           for (v <- vectorDatasets) {
-            // val file: String = "/home/david/shapefiles/4326/states_2.geojson" //"data/censusMetroNew.geojson"
             var jsonPath = v.theBasePath + "/" + r.srid + "/" + v.theJSON
             println(jsonPath)
-            //val jsonPath = vectorDatasets(0)._2
             val theJSON = scala.io.Source.fromFile(jsonPath).getLines.mkString
             case class Attributes(NAME: String, ID: Int)
             implicit val boxedToRead = jsonFormat2(Attributes)
@@ -126,15 +120,6 @@ object Main {
 
             var zonalStatsStart = System.currentTimeMillis()
 
-            /*          
-            val multiGeom = multiPolygons.mapValues(x => x.geom)
-            val multiHistogram = multiGeom.mapValues(x => rasterTileLayerRDD.polygonalHistogram(x))
-            val multiPolyStats = multiHistogram.mapValues(x => x.statistics.toList)
-            for (k <- multiPolyStats.keys) {
-              println(k, multiPolyStats(k))
-            }
-            */
-
             val theMultiPolygonsKeys = multiPolygons.keys.toList
             for (i<-0 to theMultiPolygonsKeys.length-1){
 
@@ -143,9 +128,6 @@ object Main {
               var theStats = histogram.statistics
 
               println(theMultiPolygonsKeys(i).toString, theStats)
-
-              /*ZonalStats += Map(theMultiPolygonsKeys(i).toString -> (theMin, theMax, theMean))
-              Map("x" -> 24, "y" -> 25, "z" -> 26)*/
 
             }
             
@@ -157,15 +139,6 @@ object Main {
 
             zonalStatsStart = System.currentTimeMillis()
 
-            /*
-            val polyGeom = polygons.mapValues(x => x.geom)
-            val polyHistogram = polyGeom.mapValues(x => rasterTileLayerRDD.polygonalHistogram(x))
-            val polyStats = polyHistogram.mapValues(x => x.statistics.toList) 
-            for (k <- polyStats.keys) {
-              println(k, polyStats(k))
-            }
-            */
-            
             val thePolygonsKeys = polygons.keys.toList
             for (i<-0 to thePolygonsKeys.length-1){
 
@@ -174,7 +147,6 @@ object Main {
               var theStats = histogram.statistics
               println(thePolygonsKeys(i).toString, theStats)
 
-              //ZonalStats += Map(thePolygonsKeys(i).toString -> (theMin, theMax, theMean))
             }
         
             zonalStatsStop = System.currentTimeMillis()
@@ -188,10 +160,6 @@ object Main {
 
             writer.write(s"polygonal_summary,$rasterName,$tilesize,$vectorName,$totalTime,$multiPolygonTime, $polygonTime, $theRun\n")
 
-
-            /*        val multiPolygonStats = ZonalStats.toList
-            val thePolygonKeys = polygons.keys.toList*/
-            // ZonalStats.toList.foreach(writer.write)
 
           } //vector
         } // run

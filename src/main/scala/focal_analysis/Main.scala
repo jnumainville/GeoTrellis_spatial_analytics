@@ -24,7 +24,6 @@ import geotrellis.raster.summary.polygonal._
 import geotrellis.raster.rasterize._
 import geotrellis.raster.rasterize.polygon._
 import geotrellis.raster.mapalgebra.local._
-// import geotrellis.proj4._
 
 import geotrellis.spark._
 import geotrellis.spark.io._
@@ -121,11 +120,6 @@ object Main {
           var (cachedTime, numCachedPixels) = countPixelsSpark(pValue, meanTile)
           writer.write(s"pixlecount,$datasetName,$tilesize,$cachedTime,cache,$x\n")
 
-          //Get sample values for the upper left corner of each spatial key
-          //val sampleCorner = meanTile.mapValues(x=> x.getDouble(0, 0))
-
-          //print the first five for confirmation
-          //sampleCorner.take(5)
           tiledRaster.unpersist()
           meanTile.unpersist()
 

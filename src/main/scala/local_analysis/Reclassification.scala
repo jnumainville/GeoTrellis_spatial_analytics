@@ -18,7 +18,6 @@ import geotrellis.raster.summary.polygonal._
 import geotrellis.raster.rasterize._
 import geotrellis.raster.rasterize.polygon._
 import geotrellis.raster.mapalgebra.local._
-// import geotrellis.proj4._
 
 import geotrellis.spark._
 import geotrellis.spark.io._

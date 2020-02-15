@@ -90,10 +90,6 @@ object CountPixels{
 
     for(r<-rasterDatasets){
 
-      //val rasterRDD: RDD[(ProjectedExtent, geotrellis.raster.Tile)] = sc.hadoopGeoTiffRDD(r.thePath)
-      //val rasterPath = new Path(r.thePath)
-      //val geoTiff: SinglebandGeoTiff = GeoTiffReader.readSingleband(r.thePath, decompress = false, streaming = true)
-
       for (x <- 1 to 3){
 
         for (tilesize <- tilesizes) {
@@ -103,7 +99,6 @@ object CountPixels{
 
           //Spark anonymous _
           val (_,rasterMetaData) = TileLayerMetadata.fromRdd(rasterRDD, FloatingLayoutScheme(tilesize))
-          //val ld = LayoutDefinition(geoTiff.rasterExtent, tilesize)
 
           val tiledRaster: RDD[(SpatialKey,geotrellis.raster.Tile)] = rasterRDD.tileToLayout(rasterMetaData.cellType, rasterMetaData.layout)
 

@@ -18,7 +18,6 @@ import geotrellis.raster.summary.polygonal._
 import geotrellis.raster.rasterize._
 import geotrellis.raster.rasterize.polygon._
 import geotrellis.raster.mapalgebra.local._
-// import geotrellis.proj4._
 
 import geotrellis.spark._
 import geotrellis.spark.io._
@@ -89,8 +88,6 @@ object rasterTiling {
     val dimensionsRDD2 = rasterRDD2.mapValues(x => x.dimensions)
     dimensionsRDD2.mapValues(x => x._1 + "," + x._2.toString()).saveAsTextFile("/media/sf_data/glc_chunkSize")
     rasterRDD2.mapValues(x => x.size.toString()).saveAsTextFile(path="/media/sf_data/glc_chunksize_size")
-    //sizeRDD = tiledRaster.mapValues(x=>x.size)
-    //sizeRDD.mapValues(x => x.toString()).saveAsTextFile("/media/sf_data/glc_chunkSize")
     println(rasterRDD2.count())
 
     val rasterRDD3: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(new Path(r.thePath), HadoopGeoTiffRDD.Options(maxTileSize = Some(300)) )
@@ -102,14 +99,6 @@ object rasterTiling {
 
 
 
-    //val df = sizeRDD.map{ case(k, tileSize) => (k.toString, tileSize.toString) }.
-
-
-
-
-    //val (_,rasterMetaData) = TileLayerMetadata.fromRdd(rasterRDD, FloatingLayoutScheme(300))
-    //val ld = LayoutDefinition(geoTiff.rasterExtent, tilesize)
-    //val tiledRaster: RDD[(SpatialKey,geotrellis.raster.Tile)] = rasterRDD.tileToLayout(rasterMetaData.cellType, rasterMetaData.layout)
     sc.stop()
   }
 }
