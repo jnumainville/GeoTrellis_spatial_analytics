@@ -50,12 +50,32 @@ object CountPixels{
 
 
   def countPixels(a:Int, b:geotrellis.raster.Tile) : Int = {
+    /*
+    Description
+
+    Input:
+      a =
+      b =
+
+    Output:
+
+    */
     var pixelCount:Int = 0
     b.foreach {z => if(z==a) pixelCount += 1}
     pixelCount
   }
 
   def countPixelsSpark(a:Int, b:org.apache.spark.rdd.RDD[(geotrellis.spark.SpatialKey, geotrellis.raster.Tile)]) = {
+    /*
+    Description
+
+    Input:
+      a =
+      b =
+
+    Output:
+
+    */
     //The code below could potentially be simplified by using mapValues on the pair RDD vs map on the normal RDD.
     var countPixelStart = System.currentTimeMillis()
     val RDDValues: org.apache.spark.rdd.RDD[geotrellis.raster.Tile] = b.values
@@ -68,7 +88,15 @@ object CountPixels{
 
 
   def main(args: Array[String]): Unit = {
+    /*
+    Main entry point for pixel count class
 
+    Input:
+      args =
+
+    Output:
+      None
+    */
     Logger.getLogger("org.apache.spark").setLevel(Level.ERROR)
 
     val rasterDatasets = List(

@@ -58,6 +58,16 @@ import java.io._
 object Main {
 
   def countPixels(a:Int, b:geotrellis.raster.Tile) : Int = {
+    /*
+    Count the pixels
+
+    Input:
+      a =
+      b =
+
+    Output:
+
+    */
     var pixelCount:Int = 0
     b.foreach {z => if(z==a) pixelCount += 1}
     pixelCount
@@ -65,6 +75,16 @@ object Main {
 
   def countPixelsSpark(a:Int, b:org.apache.spark.rdd.RDD[(geotrellis.spark.SpatialKey, geotrellis.raster.Tile)]) = {
     //The code below could potentially be simplified by using mapValues on the pair RDD vs map on the normal RDD.
+    /*
+    Count the pixels with spark
+
+    Input:
+      a =
+      b =
+
+    Output:
+
+    */
     var countPixelStart = System.currentTimeMillis()
     val RDDValues: org.apache.spark.rdd.RDD[geotrellis.raster.Tile] = b.values
     val y = RDDValues.map(x => countPixels(a,x))
@@ -75,7 +95,15 @@ object Main {
   }
 
   def main(args: Array[String]): Unit = {
+    /*
+    Main entry point for focal analysis
 
+    Input:
+      args =
+
+    Output:
+      None
+    */
     val outCSVPath = "/data/projects/G-818404/geotrellis_focalcount_8_27_2018_12instances.csv"
     val writer = new PrintWriter(new File(outCSVPath))
     writer.write("analytic,dataset,tilesize,focalMeantime,counttime,type,run\n")

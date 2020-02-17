@@ -22,12 +22,30 @@ object two_raster_add {
 
 
   def countPixels(a: Int, b: geotrellis.raster.Tile): Int = {
+    /*
+    Count the pixels
+
+    Input:
+
+    Output:
+
+    */
     var pixelCount: Int = 0
     b.foreach { z => if (z == a) pixelCount += 1 }
     pixelCount
   }
 
   def countPixelsSpark(a: Int, b: org.apache.spark.rdd.RDD[(geotrellis.spark.SpatialKey, geotrellis.raster.Tile)]) = {
+    /*
+    Count the pixels using spark
+
+    Input:
+      a =
+      b =
+
+    Output:
+
+    */
     //The code below could potentially be simplified by using mapValues on the pair RDD vs map on the normal RDD.
     var countPixelStart = System.currentTimeMillis()
     val RDDValues: org.apache.spark.rdd.RDD[geotrellis.raster.Tile] = b.values
@@ -39,7 +57,17 @@ object two_raster_add {
   }
 
   def twoRasterAdd(r1: org.apache.spark.rdd.RDD[(geotrellis.spark.SpatialKey, geotrellis.raster.Tile)], r2: org.apache.spark.rdd.RDD[(geotrellis.spark.SpatialKey, geotrellis.raster.Tile)], pixelValue: Int) = {
+    /*
+    Add two rasters
 
+    Input:
+      r1 =
+      r2 =
+      pixelValue =
+
+    Output:
+
+    */
     var rasterAddStart = System.currentTimeMillis()
 
     /*Note from geotrellis documentation, if tiles are not aligned,
@@ -59,7 +87,15 @@ object two_raster_add {
 
 
   def main(args: Array[String]): Unit = {
+    /*
+    Main entry point for the two raster add function
 
+    Input:
+      args =
+
+    Output:
+      None
+    */
     Logger.getLogger("org.apache.spark").setLevel(Level.ERROR)
     //Raster Dataset Path
     val rasterDatasets = List(
@@ -107,7 +143,6 @@ object two_raster_add {
           writer.write(s"two_raster_add,$datasetName,$tilesize,$cachedTime,cached,$x\n")
           raster1.unpersist()
           raster2.unpersist()
-
 
         }
       }

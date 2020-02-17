@@ -57,12 +57,32 @@ object Reclassification{
   //Class for testing raster local operation pixel count
 
   def countPixels(a:Int, b:geotrellis.raster.Tile) : Int = {
+    /*
+    Count the pixels
+
+    Input:
+      a =
+      b =
+
+    Output:
+
+    */
     var pixelCount:Int = 0
     b.foreach {z => if(z==a) pixelCount += 1}
     pixelCount
   }
 
   def countPixelsSpark(a:Int, b:org.apache.spark.rdd.RDD[(geotrellis.spark.SpatialKey, geotrellis.raster.Tile)]) = {
+    /*
+    Count the pixels using spark
+
+    Input:
+      a =
+      b =
+
+    Output:
+
+    */
     //The code below could potentially be simplified by using mapValues on the pair RDD vs map on the normal RDD.
     var countPixelStart = System.currentTimeMillis()
     val RDDValues: org.apache.spark.rdd.RDD[geotrellis.raster.Tile] = b.values
@@ -75,6 +95,17 @@ object Reclassification{
 
 
   def reclassifyRaster(theRaster:org.apache.spark.rdd.RDD[(geotrellis.spark.SpatialKey, geotrellis.raster.Tile)], oldValue:Int, newValue:Int)  = {
+    /*
+    Reclassify the raster
+
+    Input:
+      theRaster =
+      oldValue =
+      newValue =
+
+    Output:
+
+    */
     //Function for reclassifying raster
 
     //Type for evaluation statement
@@ -92,7 +123,15 @@ object Reclassification{
 
 
   def main(args: Array[String]): Unit = {
+    /*
+    Entry point for reclassification
 
+    Input:
+      args =
+
+    Output:
+      None
+    */
     Logger.getLogger("org.apache.spark").setLevel(Level.ERROR)
     val rasterDatasets = List(
       new myRaster("glc", "/media/sf_data/scidb_datasets/glc2000_clipped.tif",16, 1)

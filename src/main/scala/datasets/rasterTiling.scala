@@ -55,7 +55,15 @@ import org.apache.hadoop.fs.Path
 object rasterTiling {
 
   def main(args: Array[String]): Unit = {
+    /*
+    Entry point for raster tiling
 
+    Input:
+      args =
+
+    Output:
+      None
+    */
     Logger.getLogger("org.apache.spark").setLevel(Level.ERROR)
 
     val rasterDatasets = List(

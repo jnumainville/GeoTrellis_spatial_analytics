@@ -59,7 +59,15 @@ import org.apache.log4j.{Level, Logger}
 object Main {
 
   def main(args: Array[String]): Unit = {
+    /*
+    Entry point for the zonal analysis
 
+    Input:
+      args =
+
+    Output:
+      None
+    */
     Logger.getLogger("org.apache.spark").setLevel(Level.ERROR)
     //Raster Dataset Path
     val rasterDatasets = List(
