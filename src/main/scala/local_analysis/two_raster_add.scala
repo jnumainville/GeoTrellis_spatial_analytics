@@ -26,25 +26,28 @@ object two_raster_add {
     Count the pixels
 
     Input:
+      a = An integer to check against
+      b = The tile to check against
 
     Output:
-
+      Sum of pixels
     */
     var pixelCount: Int = 0
     b.foreach { z => if (z == a) pixelCount += 1 }
     pixelCount
   }
 
-  def countPixelsSpark(a: Int, b: org.apache.spark.rdd.RDD[(geotrellis.spark.SpatialKey, geotrellis.raster.Tile)]) = {
+  def countPixelsSpark(a: Int, b: org.apache.spark.rdd.RDD[(geotrellis.spark.SpatialKey,
+    geotrellis.raster.Tile)]) = {
     /*
-    Count the pixels using spark
+    Count the pixels with spark
 
     Input:
-      a =
-      b =
+      a = An integer to check against
+      b = Resilient distributed dataset containing a spatial keys and tiles, a raster
 
     Output:
-
+      (time taken, sum of pixels)
     */
     //The code below could potentially be simplified by using mapValues on the pair RDD vs map on the normal RDD.
     var countPixelStart = System.currentTimeMillis()
@@ -56,17 +59,19 @@ object two_raster_add {
     (theTime, sumOfPixels)
   }
 
-  def twoRasterAdd(r1: org.apache.spark.rdd.RDD[(geotrellis.spark.SpatialKey, geotrellis.raster.Tile)], r2: org.apache.spark.rdd.RDD[(geotrellis.spark.SpatialKey, geotrellis.raster.Tile)], pixelValue: Int) = {
+  def twoRasterAdd(r1: org.apache.spark.rdd.RDD[(geotrellis.spark.SpatialKey, geotrellis.raster.Tile)],
+                   r2: org.apache.spark.rdd.RDD[(geotrellis.spark.SpatialKey, geotrellis.raster.Tile)],
+                   pixelValue: Int) = {
     /*
     Add two rasters
 
     Input:
-      r1 =
-      r2 =
-      pixelValue =
+      r1 = A resilient distributed dataset, the first raster to add
+      r2 = A resilient distributed dataset, the second raster to add
+      pixelValue = The pixel value to check against
 
     Output:
-
+      (time taken to add, resulting raster)
     */
     var rasterAddStart = System.currentTimeMillis()
 
@@ -91,7 +96,7 @@ object two_raster_add {
     Main entry point for the two raster add function
 
     Input:
-      args =
+      args = None
 
     Output:
       None
@@ -107,7 +112,7 @@ object two_raster_add {
       //new rasterdataset("meris_3m", "/data/projects/G-818404/meris_2010_clipped_3m/", 100, 1)
     )
 
-    val tileSizes = Array(25) //, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000) //, 1500, 2000, 2500, 3000, 3500, 4000)
+    val tileSizes = Array(25)
 
 
     //val writer = new BufferedWriter(new )
@@ -115,7 +120,9 @@ object two_raster_add {
     val writer = new PrintWriter(new File(outCSVPath))
     writer.write("analytic,raster_dataset,tilesize,total_time,run\n")
 
-    val conf = new SparkConf().setMaster("local[2]").setAppName("Zonal Stats").set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").set("spark.kryo.regisintrator", "geotrellis.spark.io.kryo.KryoRegistrator")
+    val conf = new SparkConf().setMaster("local[2]").setAppName("Zonal Stats").
+      set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").
+      set("spark.kryo.regisintrator", "geotrellis.spark.io.kryo.KryoRegistrator")
 
     implicit val sc = new SparkContext(conf)
     for (x <- 1 to 3){
@@ -128,10 +135,13 @@ object two_raster_add {
           //val tilesize = 250
 
           //val geoTiff: SinglebandGeoTiff = SinglebandGeoTiff(r.thePath)
-          val rasterRDD: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(new Path(r.thePath), HadoopGeoTiffRDD.Options.DEFAULT)
+          val rasterRDD: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(new Path(r.thePath),
+            HadoopGeoTiffRDD.Options.DEFAULT)
           val (_, rasterMetaData) = TileLayerMetadata.fromRdd(rasterRDD, FloatingLayoutScheme(tilesize))
-          val raster1: RDD[(SpatialKey, geotrellis.raster.Tile)] = rasterRDD.tileToLayout(rasterMetaData.cellType, rasterMetaData.layout)
-          val raster2: RDD[(SpatialKey, geotrellis.raster.Tile)] = rasterRDD.tileToLayout(rasterMetaData.cellType, rasterMetaData.layout)
+          val raster1: RDD[(SpatialKey, geotrellis.raster.Tile)] = rasterRDD.tileToLayout(rasterMetaData.cellType,
+            rasterMetaData.layout)
+          val raster2: RDD[(SpatialKey, geotrellis.raster.Tile)] = rasterRDD.tileToLayout(rasterMetaData.cellType,
+            rasterMetaData.layout)
 
           var (memoryTime, calcRaster) = twoRasterAdd(raster1, raster2, pValue)
           println(memoryTime)

@@ -63,7 +63,7 @@ object Main {
     Entry point for the zonal analysis
 
     Input:
-      args =
+      args = None
 
     Output:
       None
@@ -88,23 +88,27 @@ object Main {
 
     )
 
-    val tileSizes = Array(25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000) //, 1500, 2000, 2500, 3000, 3500, 4000)
+    val tileSizes = Array(25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000)
 
     val outSummaryStats = "/home/david/geotrellis_glc_stats_zonalstats.csv"
     val outCSVPath = "/data/projects/G-818404/geotrellis_zonalstats_meris_nlcd_for_9_26_2018_12instances.csv" //
     val writer = new PrintWriter(new File(outCSVPath))
     writer.write("analytic,raster_dataset,tilesize,vector_dataset,total_time,multipolygon_time, polygon_time, run\n")
 
-    val conf = new SparkConf().setMaster("local[12]").setAppName("Zonal Stats").set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").set("spark.kryo.regisintrator", "geotrellis.spark.io.kryo.KryoRegistrator")
+    val conf = new SparkConf().setMaster("local[12]").setAppName("Zonal Stats").
+      set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").
+      set("spark.kryo.regisintrator", "geotrellis.spark.io.kryo.KryoRegistrator")
     implicit val sc = new SparkContext(conf)
 
     for(r<-rasterDatasets) {
 
       for (tilesize <- tileSizes) {
 
-        val rasterRDD: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(r.thePath, HadoopGeoTiffRDD.Options.DEFAULT)
+        val rasterRDD: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(r.thePath,
+          HadoopGeoTiffRDD.Options.DEFAULT)
         val (_, rasterMetaData) = TileLayerMetadata.fromRdd(rasterRDD, FloatingLayoutScheme(tilesize))
-        val tiledRaster: RDD[(SpatialKey, geotrellis.raster.Tile)] = rasterRDD.tileToLayout(rasterMetaData.cellType, rasterMetaData.layout)
+        val tiledRaster: RDD[(SpatialKey, geotrellis.raster.Tile)] = rasterRDD.tileToLayout(rasterMetaData.cellType,
+          rasterMetaData.layout)
         val rasterTileLayerRDD: TileLayerRDD[SpatialKey] = ContextRDD(tiledRaster, rasterMetaData)
         var rasterName = ""
         var vectorName = ""
@@ -120,8 +124,10 @@ object Main {
             implicit val boxedToRead = jsonFormat2(Attributes)
 
             // GeoTrellis does not handle both multipolygons and polgyons in the same function
-            val multiPolygons: Map[String, MultiPolygonFeature[Attributes]] = theJSON.parseGeoJson[JsonFeatureCollectionMap].getAllMultiPolygonFeatures[Attributes]
-            val polygons: Map[String, PolygonFeature[Attributes]] = theJSON.parseGeoJson[JsonFeatureCollectionMap].getAllPolygonFeatures[Attributes]
+            val multiPolygons: Map[String, MultiPolygonFeature[Attributes]] = theJSON.
+              parseGeoJson[JsonFeatureCollectionMap].getAllMultiPolygonFeatures[Attributes]
+            val polygons: Map[String, PolygonFeature[Attributes]] = theJSON.
+              parseGeoJson[JsonFeatureCollectionMap].getAllPolygonFeatures[Attributes]
 
             //Potential object for writing outvalues
             var ZonalStats = new ListBuffer[Map[String, (Int, Int, Double)]]()
@@ -166,7 +172,8 @@ object Main {
 
             println(s"Total Time to complete: $totalTime for $rasterName with tilesize $tilesize on vector $vectorName")
 
-            writer.write(s"polygonal_summary,$rasterName,$tilesize,$vectorName,$totalTime,$multiPolygonTime, $polygonTime, $theRun\n")
+            writer.write(s"polygonal_summary,$rasterName,$tilesize,$vectorName,$totalTime,$multiPolygonTime, " +
+              s"$polygonTime, $theRun\n")
 
 
           } //vector

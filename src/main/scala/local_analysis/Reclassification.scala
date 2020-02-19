@@ -61,11 +61,11 @@ object Reclassification{
     Count the pixels
 
     Input:
-      a =
-      b =
+      a = An integer to check against
+      b = The tile to check against
 
     Output:
-
+      Sum of pixels
     */
     var pixelCount:Int = 0
     b.foreach {z => if(z==a) pixelCount += 1}
@@ -74,14 +74,14 @@ object Reclassification{
 
   def countPixelsSpark(a:Int, b:org.apache.spark.rdd.RDD[(geotrellis.spark.SpatialKey, geotrellis.raster.Tile)]) = {
     /*
-    Count the pixels using spark
+    Count the pixels with spark
 
     Input:
-      a =
-      b =
+      a = An integer to check against
+      b = Resilient distributed dataset containing a spatial keys and tiles, a raster
 
     Output:
-
+      (time taken, sum of pixels)
     */
     //The code below could potentially be simplified by using mapValues on the pair RDD vs map on the normal RDD.
     var countPixelStart = System.currentTimeMillis()
@@ -94,17 +94,18 @@ object Reclassification{
   }
 
 
-  def reclassifyRaster(theRaster:org.apache.spark.rdd.RDD[(geotrellis.spark.SpatialKey, geotrellis.raster.Tile)], oldValue:Int, newValue:Int)  = {
+  def reclassifyRaster(theRaster:org.apache.spark.rdd.RDD[(geotrellis.spark.SpatialKey, geotrellis.raster.Tile)],
+                       oldValue:Int, newValue:Int)  = {
     /*
     Reclassify the raster
 
     Input:
-      theRaster =
-      oldValue =
-      newValue =
+      theRaster = A resilient distributed dataset, the raster to reclassify
+      oldValue = An integer, the old value of the raster
+      newValue = An integer, the new value of the raster
 
     Output:
-
+      (time taken to reclassify, time taken to count, raster after it was reclassed)
     */
     //Function for reclassifying raster
 
@@ -127,7 +128,7 @@ object Reclassification{
     Entry point for reclassification
 
     Input:
-      args =
+      args = None
 
     Output:
       None
@@ -147,9 +148,11 @@ object Reclassification{
     writer.write("analytic,dataset,tilesize,reclasstime,counttime,type,run\n")
 
     
-    val tilesizes = Array(25, 50)//, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000) //, 1500, 2000, 2500, 3000, 3500, 4000)
+    val tilesizes = Array(25, 50)
 
-    val conf = new SparkConf().setMaster("local[12]").setAppName("Spark Tiler").set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").set("spark.kryo.regisintrator", "geotrellis.spark.io.kryo.KryoRegistrator")//.set("spark.driver.memory", "2g").set("spark.executor.memory", "1g")
+    val conf = new SparkConf().setMaster("local[12]").setAppName("Spark Tiler").
+      set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").
+      set("spark.kryo.regisintrator", "geotrellis.spark.io.kryo.KryoRegistrator")
     implicit val sc = new SparkContext(conf)
 
     for(r<-rasterDatasets){
@@ -158,22 +161,26 @@ object Reclassification{
 
         for (tilesize <- tilesizes) {
 
-          val rasterRDD: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(new Path(r.thePath), HadoopGeoTiffRDD.Options.DEFAULT)
+          val rasterRDD: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(new Path(r.thePath),
+            HadoopGeoTiffRDD.Options.DEFAULT)
           val (_,rasterMetaData) = TileLayerMetadata.fromRdd(rasterRDD, FloatingLayoutScheme(tilesize))
           
-          val tiledRaster: RDD[(SpatialKey,geotrellis.raster.Tile)] = rasterRDD.tileToLayout(rasterMetaData.cellType, rasterMetaData.layout)
+          val tiledRaster: RDD[(SpatialKey,geotrellis.raster.Tile)] = rasterRDD.tileToLayout(rasterMetaData.cellType,
+            rasterMetaData.layout)
           rasterRDD.unpersist()
           
           var datasetName : String = r.name
           var pValue = r.pixelValue
 
           //Call Spark Function to Reclassify Raster
-          var (reclassMemoryTime,reclassMemoryCountTime,reclassedTileRaster)  = reclassifyRaster(tiledRaster, r.pixelValue, r.newPixel)
+          var (reclassMemoryTime,reclassMemoryCountTime,reclassedTileRaster)  = reclassifyRaster(tiledRaster,
+            r.pixelValue, r.newPixel)
           //println(reclassMemoryTime, reclassMemoryCountTime)
           writer.write(s"reclassify,$datasetName,$tilesize,$reclassMemoryTime,$reclassMemoryCountTime,memory,$x\n")
 
           //Reclassify again with pixel values switched
-          var (reclassCachedTime,reclassCachedCountTime,reclassedCachedTileRaster)  = reclassifyRaster(reclassedTileRaster, r.newPixel, r.pixelValue)
+          var (reclassCachedTime,reclassCachedCountTime,reclassedCachedTileRaster)  =
+            reclassifyRaster(reclassedTileRaster, r.newPixel, r.pixelValue)
           writer.write(s"reclassify,$datasetName,$tilesize,$reclassCachedTime,$reclassCachedCountTime,cached,$x\n")
           tiledRaster.unpersist()
         }

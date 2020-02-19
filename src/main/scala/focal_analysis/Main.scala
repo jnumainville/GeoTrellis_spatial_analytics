@@ -54,7 +54,6 @@ import java.io._
 //File Object
 
 
-
 object Main {
 
   def countPixels(a:Int, b:geotrellis.raster.Tile) : Int = {
@@ -62,28 +61,29 @@ object Main {
     Count the pixels
 
     Input:
-      a =
-      b =
+      a = An integer to check against
+      b = The tile to check
 
     Output:
-
+      Sum of pixels
     */
     var pixelCount:Int = 0
     b.foreach {z => if(z==a) pixelCount += 1}
     pixelCount
   }
 
-  def countPixelsSpark(a:Int, b:org.apache.spark.rdd.RDD[(geotrellis.spark.SpatialKey, geotrellis.raster.Tile)]) = {
+  def countPixelsSpark(a:Int, b:org.apache.spark.rdd.RDD[(geotrellis.spark.SpatialKey,
+    geotrellis.raster.Tile)]) = {
     //The code below could potentially be simplified by using mapValues on the pair RDD vs map on the normal RDD.
     /*
     Count the pixels with spark
 
     Input:
-      a =
-      b =
+      a = An integer to check against
+      b = Resilient distributed dataset containing a spatial keys and data
 
     Output:
-
+      (time taken, sum of pixels)
     */
     var countPixelStart = System.currentTimeMillis()
     val RDDValues: org.apache.spark.rdd.RDD[geotrellis.raster.Tile] = b.values
@@ -99,7 +99,7 @@ object Main {
     Main entry point for focal analysis
 
     Input:
-      args =
+      args = None
 
     Output:
       None
@@ -116,9 +116,11 @@ object Main {
       //new rasterdataset("meris_3m", "/data/projects/G-818404/meris_2010_clipped_3m/", 100, 1)
     )
 
-    val tilesizes = Array(25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000) //, 1500, 2000, 2500, 3000, 3500, 4000)
+    val tilesizes = Array(25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000)
 
-    val conf = new SparkConf().setMaster("local[12]").setAppName("Spark Tiler").set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").set("spark.kryo.regisintrator", "geotrellis.spark.io.kryo.KryoRegistrator")//.set("spark.driver.memory", "2g").set("spark.executor.memory", "1g")
+    val conf = new SparkConf().setMaster("local[12]").setAppName("Spark Tiler").
+      set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").
+      set("spark.kryo.regisintrator", "geotrellis.spark.io.kryo.KryoRegistrator")
     implicit val sc = new SparkContext(conf)
 
     for(r<-rasterDatasets){
@@ -127,11 +129,13 @@ object Main {
 
         for (tilesize <- tilesizes) {
 
-          val rasterRDD: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(r.thePath, HadoopGeoTiffRDD.Options.DEFAULT)
+          val rasterRDD: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(r.thePath,
+            HadoopGeoTiffRDD.Options.DEFAULT)
           val pValue = r.pixelValue
           val (_,rasterMetaData) = TileLayerMetadata.fromRdd(rasterRDD, FloatingLayoutScheme(tilesize))
           
-          val tiledRaster: RDD[(SpatialKey,geotrellis.raster.Tile)] = rasterRDD.tileToLayout(rasterMetaData.cellType, rasterMetaData.layout)
+          val tiledRaster: RDD[(SpatialKey,geotrellis.raster.Tile)] = rasterRDD.tileToLayout(rasterMetaData.cellType,
+            rasterMetaData.layout)
           rasterRDD.unpersist()
         
           var datasetName : String = r.name

@@ -59,7 +59,7 @@ object rasterTiling {
     Entry point for raster tiling
 
     Input:
-      args =
+      args = None
 
     Output:
       None
@@ -75,37 +75,41 @@ object rasterTiling {
     )
 
 
-    val conf = new SparkConf().setMaster("local[2]").setAppName("Spark Tiler").set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").set("spark.kryo.regisintrator", "geotrellis.spark.io.kryo.KryoRegistrator")//.set("spark.driver.memory", "2g").set("spark.executor.memory", "1g")
+    val conf = new SparkConf().setMaster("local[2]").setAppName("Spark Tiler").
+      set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").
+      set("spark.kryo.regisintrator", "geotrellis.spark.io.kryo.KryoRegistrator")
     implicit val sc = new SparkContext(conf)
 
     val r = rasterDatasets(0)
 
-    val rasterRDD: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(new Path(r.thePath), HadoopGeoTiffRDD.Options.DEFAULT)
+    val rasterRDD: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(new Path(r.thePath),
+      HadoopGeoTiffRDD.Options.DEFAULT)
 
     //Tile Layout
     val (_,rasterMetaData) = TileLayerMetadata.fromRdd(rasterRDD,FloatingLayoutScheme(tileSize = 300))
-    val tiledRaster: RDD[(SpatialKey,geotrellis.raster.Tile)] = rasterRDD.tileToLayout(rasterMetaData.cellType, rasterMetaData.layout)
+    val tiledRaster: RDD[(SpatialKey,geotrellis.raster.Tile)] = rasterRDD.tileToLayout(rasterMetaData.cellType,
+      rasterMetaData.layout)
 
     //tiledRaster has the properties .dimensions and .size (no. of pixels) which might be useful.
     var dimensionsRDD = tiledRaster.mapValues(x=>x.dimensions)
     var sizeRDD = tiledRaster.mapValues(x=>x.size)
-    sizeRDD.map(x => x._1.extent(rasterMetaData.layout).toString() + "," + x._2.toString()).saveAsTextFile("/media/sf_data/glc_layouttilesize")
+    sizeRDD.map(x => x._1.extent(rasterMetaData.layout).toString() + "," + x._2.toString()).
+      saveAsTextFile("/media/sf_data/glc_layouttilesize")
     println(tiledRaster.count())
 
-    val rasterRDD2: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(new Path(r.thePath), HadoopGeoTiffRDD.Options(chunkSize= Some(300)) )
+    val rasterRDD2: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(new Path(r.thePath),
+      HadoopGeoTiffRDD.Options(chunkSize= Some(300)) )
     val dimensionsRDD2 = rasterRDD2.mapValues(x => x.dimensions)
     dimensionsRDD2.mapValues(x => x._1 + "," + x._2.toString()).saveAsTextFile("/media/sf_data/glc_chunkSize")
     rasterRDD2.mapValues(x => x.size.toString()).saveAsTextFile(path="/media/sf_data/glc_chunksize_size")
     println(rasterRDD2.count())
 
-    val rasterRDD3: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(new Path(r.thePath), HadoopGeoTiffRDD.Options(maxTileSize = Some(300)) )
+    val rasterRDD3: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(new Path(r.thePath),
+      HadoopGeoTiffRDD.Options(maxTileSize = Some(300)) )
     val dimensionsRDD3 = rasterRDD3.mapValues(x => x.dimensions)
     dimensionsRDD3.mapValues(x => x._1 + "," + x._2.toString()).saveAsTextFile("/media/sf_data/glc_maxTileSize")
     rasterRDD3.mapValues(x => x.size.toString()).saveAsTextFile(path="/media/sf_data/glc_maxTileSize_size")
     println(rasterRDD3.count())
-
-
-
 
     sc.stop()
   }
