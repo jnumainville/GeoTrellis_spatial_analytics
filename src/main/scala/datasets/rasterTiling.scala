@@ -67,11 +67,8 @@ object rasterTiling {
     Logger.getLogger("org.apache.spark").setLevel(Level.ERROR)
 
     val rasterDatasets = List(
+      // TODO: need to take data externally somehow
       new myRaster("glc", "/media/sf_data/scidb_datasets/glc2000_clipped.tif", 16, 1)
-      /* new myRaster("glc", "/data/projects/G-818404/glc2000_clipped.tif", 16, 1),
-      new myRaster("meris", "/data/projects/G-818404/meris_2010_clipped.tif", 100, 1),
-      new myRaster("nlcd", "/data/projects/G-818404/nlcd_2006.tif", 21, 1) */
-      // new myRaster("meris_3m", "/data/projects/G-818404/meris_3m/", 100, 1)
     )
 
 

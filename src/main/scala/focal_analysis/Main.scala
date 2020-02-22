@@ -109,11 +109,8 @@ object Main {
     writer.write("analytic,dataset,tilesize,focalMeantime,counttime,type,run\n")
 
     val rasterDatasets = List(
-      //new myRaster("glc", "/home/david/Downloads/glc2000.tif", 16, 1)
+      // TODO: need to take data externally somehow
       new myRaster("glc", "/data/projects/G-818404/glc2000_clipped.tif", 16, 1),
-      new myRaster("meris", "/data/projects/G-818404/meris_2010_clipped.tif", 100, 1),
-      new myRaster("nlcd", "/data/projects/G-818404/nlcd_2006.tif", 21, 1)
-      //new rasterdataset("meris_3m", "/data/projects/G-818404/meris_2010_clipped_3m/", 100, 1)
     )
 
     val tilesizes = Array(25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000)

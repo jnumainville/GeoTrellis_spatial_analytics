@@ -90,6 +90,7 @@ object Main {
 
     val tileSizes = Array(25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000)
 
+    // TODO: need to make files anonymous
     val outSummaryStats = "/home/david/geotrellis_glc_stats_zonalstats.csv"
     val outCSVPath = "/data/projects/G-818404/geotrellis_zonalstats_meris_nlcd_for_9_26_2018_12instances.csv" //
     val writer = new PrintWriter(new File(outCSVPath))
