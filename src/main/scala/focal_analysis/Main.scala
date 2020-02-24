@@ -104,15 +104,21 @@ object Main {
     Output:
       None
     */
-    val outCSVPath = "/data/projects/G-818404/geotrellis_focalcount_8_27_2018_12instances.csv"
+
+    val dataName = args(1)
+    val dataFile = args(2)
+    val dataPixelVal = args(3).toInt
+    val dataNewPixel = args(4).toInt
+    val outCSVPath = args(5)
+
     val writer = new PrintWriter(new File(outCSVPath))
     writer.write("analytic,dataset,tilesize,focalMeantime,counttime,type,run\n")
 
     val rasterDatasets = List(
-      // TODO: need to take data externally somehow
-      new myRaster("glc", "/data/projects/G-818404/glc2000_clipped.tif", 16, 1),
+      new myRaster(dataName, dataFile, dataPixelVal, dataNewPixel),
     )
 
+    // TODO: need to get tile sizes from command line
     val tilesizes = Array(25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000)
 
     val conf = new SparkConf().setMaster("local[12]").setAppName("Spark Tiler").

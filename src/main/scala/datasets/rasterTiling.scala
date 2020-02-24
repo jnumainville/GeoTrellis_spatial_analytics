@@ -64,13 +64,18 @@ object rasterTiling {
     Output:
       None
     */
+
+    val dataName = args(1)
+    val dataFile = args(2)
+    val dataPixelVal = args(3).toInt
+    val dataNewPixel = args(4).toInt
+    val outputFolder= args(5)
+
     Logger.getLogger("org.apache.spark").setLevel(Level.ERROR)
 
     val rasterDatasets = List(
-      // TODO: need to take data externally somehow
-      new myRaster("glc", "/media/sf_data/scidb_datasets/glc2000_clipped.tif", 16, 1)
+      new myRaster(dataName, dataFile, dataPixelVal, dataNewPixel)
     )
-
 
     val conf = new SparkConf().setMaster("local[2]").setAppName("Spark Tiler").
       set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").
@@ -91,21 +96,21 @@ object rasterTiling {
     var dimensionsRDD = tiledRaster.mapValues(x=>x.dimensions)
     var sizeRDD = tiledRaster.mapValues(x=>x.size)
     sizeRDD.map(x => x._1.extent(rasterMetaData.layout).toString() + "," + x._2.toString()).
-      saveAsTextFile("/media/sf_data/glc_layouttilesize")
+      saveAsTextFile(s"$outputFolder/${dataName}_layouttilesize")
     println(tiledRaster.count())
 
     val rasterRDD2: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(new Path(r.thePath),
       HadoopGeoTiffRDD.Options(chunkSize= Some(300)) )
     val dimensionsRDD2 = rasterRDD2.mapValues(x => x.dimensions)
-    dimensionsRDD2.mapValues(x => x._1 + "," + x._2.toString()).saveAsTextFile("/media/sf_data/glc_chunkSize")
-    rasterRDD2.mapValues(x => x.size.toString()).saveAsTextFile(path="/media/sf_data/glc_chunksize_size")
+    dimensionsRDD2.mapValues(x => x._1 + "," + x._2.toString()).saveAsTextFile(s"$outputFolder/${dataName}_chunkSize")
+    rasterRDD2.mapValues(x => x.size.toString()).saveAsTextFile(path=s"$outputFolder/${dataName}_chunksize_size")
     println(rasterRDD2.count())
 
     val rasterRDD3: RDD[(ProjectedExtent, Tile)] = HadoopGeoTiffRDD.spatial(new Path(r.thePath),
       HadoopGeoTiffRDD.Options(maxTileSize = Some(300)) )
     val dimensionsRDD3 = rasterRDD3.mapValues(x => x.dimensions)
-    dimensionsRDD3.mapValues(x => x._1 + "," + x._2.toString()).saveAsTextFile("/media/sf_data/glc_maxTileSize")
-    rasterRDD3.mapValues(x => x.size.toString()).saveAsTextFile(path="/media/sf_data/glc_maxTileSize_size")
+    dimensionsRDD3.mapValues(x => x._1 + "," + x._2.toString()).saveAsTextFile(s"$outputFolder/${dataName}_maxTileSize")
+    rasterRDD3.mapValues(x => x.size.toString()).saveAsTextFile(path=s"$outputFolder/${dataName}_maxTileSize_size")
     println(rasterRDD3.count())
 
     sc.stop()

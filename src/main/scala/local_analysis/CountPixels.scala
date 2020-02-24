@@ -98,18 +98,23 @@ object CountPixels{
     Output:
       None
     */
+
+    val dataName = args(1)
+    val dataFile = args(2)
+    val dataPixelVal = args(3).toInt
+    val dataNewPixel = args(4).toInt
+    val outCSVPath = args(5)
+
     Logger.getLogger("org.apache.spark").setLevel(Level.ERROR)
 
     val rasterDatasets = List(
-      // TODO: need to take data externally somehow
-      new myRaster("glc", "/home/david/Downloads/glc2000.tif", 16, 1)
-      )
-    // TODO: need to anonimize out path
-    val outCSVPath = "/home/david/output.csv"  //"/data/projects/G-818404/geotrellis_localcount_8_27_2018_12instances.csv" //
+      new myRaster(dataName, dataFile, dataPixelVal, dataNewPixel)
+    )
+
     val writer = new PrintWriter(new File(outCSVPath))
     writer.write("analytic,dataset,tilesize,time,type,run\n")
 
-    val tilesizes = Array(25) //, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000) //, 1500, 2000, 2500, 3000, 3500, 4000)
+    val tilesizes = Array(25)
 
     val conf = new SparkConf().setMaster("local[2]").setAppName("Spark Tiler").
       set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").
@@ -136,15 +141,15 @@ object CountPixels{
           rasterRDD.unpersist()
           var datasetName : String = r.name
 
-          //Call Spark Function to count pixels
+          // Call Spark Function to count pixels
           var (memoryTime, numMemoryPixels) = countPixelsSpark(pValue, tiledRaster)
           writer.write(s"pixlecount,$datasetName,$tilesize,$memoryTime,memory,$x\n")
 
-          //Call Spark Function again to get the cached time
+          // Call Spark Function again to get the cached time
           var (cachedTime, numCachedPixels) = countPixelsSpark(pValue, tiledRaster)
           writer.write(s"pixlecount,$datasetName,$tilesize,$cachedTime,cache,$x\n")
    
-          //Unpersist tiled raster
+          // Unpersist tiled raster
           tiledRaster.unpersist()
         }
 

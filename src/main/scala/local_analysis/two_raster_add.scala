@@ -101,19 +101,24 @@ object two_raster_add {
     Output:
       None
     */
+
+    val dataName = args(1)
+    val dataFile = args(2)
+    val dataPixelVal = args(3).toInt
+    val dataNewPixel = args(4).toInt
+    val outCSVPath = args(5)
+
     Logger.getLogger("org.apache.spark").setLevel(Level.ERROR)
     //Raster Dataset Path
     val rasterDatasets = List(
-      // TODO: need to take data externally somehow
-      new myRaster("glc", "/home/david/Downloads/glc2000.tif", 16, 1, 4326)
+      new myRaster(dataName, dataFile, dataPixelVal, dataNewPixel)
     )
 
+    // TODO: need to get tile sizes from command line
     val tileSizes = Array(25)
 
 
     //val writer = new BufferedWriter(new )
-    // TODO: need to make CSV anonymous
-    val outCSVPath = "/home/david/Downloads/test.csv" // "/data/projects/G-818404/geotrellis_raster_raster_add_9_16_2018_12instances.csv" //
     val writer = new PrintWriter(new File(outCSVPath))
     writer.write("analytic,raster_dataset,tilesize,total_time,run\n")
 

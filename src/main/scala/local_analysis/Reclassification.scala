@@ -133,19 +133,23 @@ object Reclassification{
     Output:
       None
     */
+
+    val dataName = args(1)
+    val dataFile = args(2)
+    val dataPixelVal = args(3).toInt
+    val dataNewPixel = args(4).toInt
+    val outCSVPath = args(5)
+
     Logger.getLogger("org.apache.spark").setLevel(Level.ERROR)
     val rasterDatasets = List(
-      // TODO: need to take data externally somehow
-      new myRaster("glc", "/media/sf_data/scidb_datasets/glc2000_clipped.tif",16, 1)
+      new myRaster(dataName, dataFile, dataPixelVal, dataNewPixel)
     )
 
-    // TODO: need to make CSV anonymous
-    val outCSVPath = "/home/david/Downloads/glc_count.txt"
-    //"/data/projects/G-818404/geotrellis_reclass_8_27_2018_12instances.csv"
     val writer = new PrintWriter(new File(outCSVPath))
     writer.write("analytic,dataset,tilesize,reclasstime,counttime,type,run\n")
 
-    
+    // TODO: need to get tile sizes from command line
+
     val tilesizes = Array(25, 50)
 
     val conf = new SparkConf().setMaster("local[12]").setAppName("Spark Tiler").
