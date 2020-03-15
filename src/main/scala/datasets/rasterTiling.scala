@@ -59,7 +59,12 @@ object rasterTiling {
     Entry point for raster tiling
 
     Input:
-      args = None
+      args = In order:
+        dataName = name of the raster
+        dataFile = name of file where the raster is
+        dataPixelVal = the current pixel value
+        dataNewPixel = the new pixel value
+        outputFolder = the folder to store the output in
 
     Output:
       None

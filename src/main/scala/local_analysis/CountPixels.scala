@@ -93,7 +93,12 @@ object CountPixels{
     Main entry point for pixel count class
 
     Input:
-      args = None
+      args = In order:
+        dataName = name of the raster
+        dataFile = name of file where the raster is
+        dataPixelVal = the current pixel value
+        dataNewPixel = the new pixel value
+        outCSVPath = where to output the CSV
 
     Output:
       None

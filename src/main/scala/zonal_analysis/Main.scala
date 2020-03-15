@@ -63,7 +63,15 @@ object Main {
     Entry point for the zonal analysis
 
     Input:
-      args = None
+      args = In order:
+        dataName = name of the raster
+        dataFile = name of file where the raster is
+        dataPixelVal = the current pixel value
+        dataNewPixel = the new pixel value
+        vectorName = the name of the vector
+        vectorFile = name of file where the vector is
+
+        outCSVPath = where to output the CSV
 
     Output:
       None
