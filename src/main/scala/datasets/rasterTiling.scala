@@ -76,17 +76,22 @@ object rasterTiling {
       None
     */
 
-    val dataName = args(1)
-    val dataFile = args(2)
-    val dataPixelVal = args(3).toInt
-    val dataNewPixel = args(4).toInt
+    val config: Config = ConfigFactory.load("datasets.conf")
+
+    val dataName = List["A", "B"]
+    val dataFile = List["A", "B"]
+    val dataPixelVal = List[1, 2]
+    val dataNewPixel = List[1, 2]
     val outputFolder= args(5)
 
     Logger.getLogger("org.apache.spark").setLevel(Level.ERROR)
 
-    val rasterDatasets = List(
-      new myRaster(dataName, dataFile, dataPixelVal, dataNewPixel)
-    )
+    val rasterDatasets = for {
+      n <- dataName
+      f <- dataFile
+      v <- dataPixelVal
+      p <- dataNewPixel
+    } yield myRaster(n, f, v, p)
 
     val conf = new SparkConf().setMaster("local[2]").setAppName("Spark Tiler").
       set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").

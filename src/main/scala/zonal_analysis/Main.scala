@@ -80,6 +80,8 @@ object Main {
       None
     */
 
+    val config: Config = ConfigFactory.load("datasets.conf")
+
     val dataName = args(1)
     val dataFile = args(2)
     val dataPixelVal = args(3).toInt
@@ -89,22 +91,24 @@ object Main {
     val vectorFile = args(6)
     val vectorJSON = args(7)
 
-    val outCSVPath = args(8)
+    val tileSizes = Array(25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000)
+
+    val outCSVPath = config.getString("main.outCSVPath")
 
     Logger.getLogger("org.apache.spark").setLevel(Level.ERROR)
     //Raster Dataset Path
-    val rasterDatasets = List(
-      new myRaster(dataName, dataFile, dataPixelVal, dataNewPixel)
-    )
+    val rasterDatasets = for {
+      n <- dataName
+      f <- dataFile
+      v <- dataPixelVal
+      p <- dataNewPixel
+    } yield myRaster(n, f, v, p)
 
-    val vectorDatasets = List(
-      new myVector(vectorName, vectorFile, vectorJSON),
-    )
-
-    // TODO: need to get tile sizes from command line
-    // maybe parse string of format (1, 2, 3) into array
-    // maybe move stuff to config file
-    val tileSizes = Array(25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000)
+    val vectorDatasets = for {
+      n <- vectorName
+      f <- vectorFile
+      j <- vectorJSON
+    } yield myRaster(n, f, j)
 
     val writer = new PrintWriter(new File(outCSVPath))
     writer.write("analytic,raster_dataset,tilesize,vector_dataset,total_time,multipolygon_time, polygon_time, run\n")

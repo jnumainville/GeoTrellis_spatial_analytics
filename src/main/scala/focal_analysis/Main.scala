@@ -114,21 +114,24 @@ object Main {
       None
     */
 
+    val config: Config = ConfigFactory.load("datasets.conf")
+
     val dataName = args(1)
     val dataFile = args(2)
     val dataPixelVal = args(3).toInt
     val dataNewPixel = args(4).toInt
-    val outCSVPath = args(5)
+    val tilesizes = Array(25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000)
+    val outCSVPath = config.getString("main.outCSVPath")
 
     val writer = new PrintWriter(new File(outCSVPath))
     writer.write("analytic,dataset,tilesize,focalMeantime,counttime,type,run\n")
 
-    val rasterDatasets = List(
-      new myRaster(dataName, dataFile, dataPixelVal, dataNewPixel),
-    )
-
-    // TODO: need to get tile sizes from command line
-    val tilesizes = Array(25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000)
+    val rasterDatasets = for {
+      n <- dataName
+      f <- dataFile
+      v <- dataPixelVal
+      p <- dataNewPixel
+    } yield myRaster(n, f, v, p)
 
     val conf = new SparkConf().setMaster("local[12]").setAppName("Spark Tiler").
       set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").

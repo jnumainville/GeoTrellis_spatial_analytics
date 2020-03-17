@@ -111,20 +111,23 @@ object two_raster_add {
       None
     */
 
+    val config: Config = ConfigFactory.load("datasets.conf")
+
     val dataName = args(1)
     val dataFile = args(2)
     val dataPixelVal = args(3).toInt
     val dataNewPixel = args(4).toInt
-    val outCSVPath = args(5)
+    val tileSizes = Array(25)
+    val outCSVPath = config.getString("two_raster_add.outCSVPath")
 
     Logger.getLogger("org.apache.spark").setLevel(Level.ERROR)
     //Raster Dataset Path
-    val rasterDatasets = List(
-      new myRaster(dataName, dataFile, dataPixelVal, dataNewPixel)
-    )
-
-    // TODO: need to get tile sizes from command line
-    val tileSizes = Array(25)
+    val rasterDatasets = for {
+      n <- dataName
+      f <- dataFile
+      v <- dataPixelVal
+      p <- dataNewPixel
+    } yield myRaster(n, f, v, p)
 
 
     //val writer = new BufferedWriter(new )

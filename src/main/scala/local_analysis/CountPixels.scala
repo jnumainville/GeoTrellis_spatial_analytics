@@ -107,22 +107,26 @@ object CountPixels{
       None
     */
 
+    val config: Config = ConfigFactory.load("datasets.conf")
+
     val dataName = args(1)
     val dataFile = args(2)
     val dataPixelVal = args(3).toInt
     val dataNewPixel = args(4).toInt
-    val outCSVPath = args(5)
+    val tilesizes = Array(25)
+    val outCSVPath = config.getString("countPixels.outCSVPath")
 
     Logger.getLogger("org.apache.spark").setLevel(Level.ERROR)
 
-    val rasterDatasets = List(
-      new myRaster(dataName, dataFile, dataPixelVal, dataNewPixel)
-    )
+    vval rasterDatasets = for {
+      n <- dataName
+      f <- dataFile
+      v <- dataPixelVal
+      p <- dataNewPixel
+    } yield myRaster(n, f, v, p)
 
     val writer = new PrintWriter(new File(outCSVPath))
     writer.write("analytic,dataset,tilesize,time,type,run\n")
-
-    val tilesizes = Array(25)
 
     val conf = new SparkConf().setMaster("local[2]").setAppName("Spark Tiler").
       set("spark.serializer", "org.apache.spark.serializer.KryoSerializer").
