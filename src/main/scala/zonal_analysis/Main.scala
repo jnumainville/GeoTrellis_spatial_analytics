@@ -55,6 +55,9 @@ import org.apache.hadoop.fs.Path
 import scala.collection.mutable.ListBuffer
 import org.apache.log4j.{Level, Logger}
 
+// config
+import collection.JavaConversions._
+import com.typesafe.config.{Config, ConfigFactory}
 
 object Main {
 

@@ -52,6 +52,12 @@ import datasets.rasterdatasets.myRaster
 import org.apache.log4j.{Level, Logger}
 import org.apache.hadoop.fs.Path
 
+// config
+import collection.JavaConversions._
+import com.typesafe.config.{Config, ConfigFactory}
+
+
+
 object rasterTiling {
 
   def main(args: Array[String]): Unit = {

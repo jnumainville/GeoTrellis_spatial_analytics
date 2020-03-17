@@ -18,6 +18,10 @@ import geotrellis.spark.io._
 import org.apache.spark.HashPartitioner
 import org.apache.hadoop.fs.Path
 
+// config
+import collection.JavaConversions._
+import com.typesafe.config.{Config, ConfigFactory}
+
 object two_raster_add {
 
 

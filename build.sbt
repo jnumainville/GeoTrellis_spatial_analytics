@@ -38,7 +38,8 @@ libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % "2.2.1" % "compile",
   //"org.apache.spark"      %% "spark-core"       % "2.2.0" % Provided
   "org.scalatest"         %%  "scalatest"       % "2.2.0" % Test,
-  "log4j" % "log4j" % "1.2.14"
+  "log4j" % "log4j" % "1.2.14",
+  "com.typesafe" % "config" % "1.4.0"
 )
 
 // When creating fat jar, remote some files with

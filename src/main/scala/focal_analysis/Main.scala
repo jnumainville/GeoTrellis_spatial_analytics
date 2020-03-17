@@ -53,6 +53,10 @@ import java.io.File
 import java.io._
 //File Object
 
+// config
+import collection.JavaConversions._
+import com.typesafe.config.{Config, ConfigFactory}
+
 
 object Main {
 

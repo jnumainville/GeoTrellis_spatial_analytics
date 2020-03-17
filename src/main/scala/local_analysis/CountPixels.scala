@@ -44,6 +44,9 @@ import java.io._
 import datasets.rasterdatasets.myRaster
 import org.apache.hadoop.fs.Path
 
+// config
+import collection.JavaConversions._
+import com.typesafe.config.{Config, ConfigFactory}
 
 object CountPixels{
   //Class for testing raster local operation pixel count
