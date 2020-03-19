@@ -53,7 +53,7 @@ import org.apache.log4j.{Level, Logger}
 import org.apache.hadoop.fs.Path
 
 // config
-import collection.JavaConversions._
+import collection.JavaConverters._
 import com.typesafe.config.{Config, ConfigFactory}
 
 
@@ -65,12 +65,7 @@ object rasterTiling {
     Entry point for raster tiling
 
     Input:
-      args = In order:
-        dataName = name of the raster
-        dataFile = name of file where the raster is
-        dataPixelVal = the current pixel value
-        dataNewPixel = the new pixel value
-        outputFolder = the folder to store the output in
+      None
 
     Output:
       None
@@ -78,11 +73,11 @@ object rasterTiling {
 
     val config: Config = ConfigFactory.load("datasets.conf")
 
-    val dataName = List["A", "B"]
-    val dataFile = List["A", "B"]
-    val dataPixelVal = List[1, 2]
-    val dataNewPixel = List[1, 2]
-    val outputFolder= args(5)
+    val dataName = config.getStringList("datasets.dataName").asScala.toList
+    val dataFile = config.getStringList("datasets.dataFile").asScala.toList
+    val dataPixelVal = config.getIntList("datasets.dataPixelVal").asScala.toList
+    val dataNewPixel = config.getIntList("datasets.dataNewPixel").asScala.toList
+    val outputFolder= config.getString("datasets.outputFolder")
 
     Logger.getLogger("org.apache.spark").setLevel(Level.ERROR)
 

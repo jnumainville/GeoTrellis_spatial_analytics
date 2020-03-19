@@ -54,7 +54,7 @@ import java.io._
 //File Object
 
 // config
-import collection.JavaConversions._
+import collection.JavaConverters._
 import com.typesafe.config.{Config, ConfigFactory}
 
 
@@ -103,12 +103,7 @@ object Main {
     Main entry point for focal analysis
 
     Input:
-      args = In order:
-        dataName = name of the raster
-        dataFile = name of file where the raster is
-        dataPixelVal = the current pixel value
-        dataNewPixel = the new pixel value
-        outCSVPath = where to output the CSV
+      None
 
     Output:
       None
@@ -116,11 +111,11 @@ object Main {
 
     val config: Config = ConfigFactory.load("datasets.conf")
 
-    val dataName = args(1)
-    val dataFile = args(2)
-    val dataPixelVal = args(3).toInt
-    val dataNewPixel = args(4).toInt
-    val tilesizes = Array(25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000)
+    val dataName = config.getStringList("main.dataName").asScala.toList
+    val dataFile = config.getStringList("main.dataFile").asScala.toList
+    val dataPixelVal = config.getIntList("main.dataPixelVal").asScala.toList
+    val dataNewPixel = config.getIntList("main.dataNewPixel").asScala.toList
+    val tilesizes = config.getIntList("main.tilesizes").asScala.toList
     val outCSVPath = config.getString("main.outCSVPath")
 
     val writer = new PrintWriter(new File(outCSVPath))

@@ -19,7 +19,7 @@ import org.apache.spark.HashPartitioner
 import org.apache.hadoop.fs.Path
 
 // config
-import collection.JavaConversions._
+import collection.JavaConverters._
 import com.typesafe.config.{Config, ConfigFactory}
 
 object two_raster_add {
@@ -100,12 +100,7 @@ object two_raster_add {
     Main entry point for the two raster add function
 
     Input:
-      args = In order:
-        dataName = name of the raster
-        dataFile = name of file where the raster is
-        dataPixelVal = the current pixel value
-        dataNewPixel = the new pixel value
-        outCSVPath = where to output the CSV
+      None
 
     Output:
       None
@@ -113,11 +108,11 @@ object two_raster_add {
 
     val config: Config = ConfigFactory.load("datasets.conf")
 
-    val dataName = args(1)
-    val dataFile = args(2)
-    val dataPixelVal = args(3).toInt
-    val dataNewPixel = args(4).toInt
-    val tileSizes = Array(25)
+    val dataName = config.getStringList("two_raster_add.dataName").asScala.toList
+    val dataFile = config.getStringList("two_raster_add.dataFile").asScala.toList
+    val dataPixelVal = config.getIntList("two_raster_add.dataPixelVal").asScala.toList
+    val dataNewPixel = config.getIntList("two_raster_add.dataNewPixel").asScala.toList
+    val tileSizes = config.getIntList("two_raster_add.tilesizes").asScala.toList
     val outCSVPath = config.getString("two_raster_add.outCSVPath")
 
     Logger.getLogger("org.apache.spark").setLevel(Level.ERROR)

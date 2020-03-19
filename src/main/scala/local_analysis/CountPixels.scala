@@ -45,7 +45,7 @@ import datasets.rasterdatasets.myRaster
 import org.apache.hadoop.fs.Path
 
 // config
-import collection.JavaConversions._
+import collection.JavaConverters._
 import com.typesafe.config.{Config, ConfigFactory}
 
 object CountPixels{
@@ -96,12 +96,7 @@ object CountPixels{
     Main entry point for pixel count class
 
     Input:
-      args = In order:
-        dataName = name of the raster
-        dataFile = name of file where the raster is
-        dataPixelVal = the current pixel value
-        dataNewPixel = the new pixel value
-        outCSVPath = where to output the CSV
+      None
 
     Output:
       None
@@ -109,12 +104,12 @@ object CountPixels{
 
     val config: Config = ConfigFactory.load("datasets.conf")
 
-    val dataName = args(1)
-    val dataFile = args(2)
-    val dataPixelVal = args(3).toInt
-    val dataNewPixel = args(4).toInt
-    val tilesizes = Array(25)
-    val outCSVPath = config.getString("countPixels.outCSVPath")
+    val dataName = config.getStringList("CountPixels.dataName").asScala.toList
+    val dataFile = config.getStringList("CountPixels.dataFile").asScala.toList
+    val dataPixelVal = config.getIntList("CountPixels.dataPixelVal").asScala.toList
+    val dataNewPixel = config.getIntList("CountPixels.dataNewPixel").asScala.toList
+    val tilesizes = config.getIntList("CountPixels.tilesizes").asScala.toList
+    val outCSVPath = config.getString("CountPixels.outCSVPath")
 
     Logger.getLogger("org.apache.spark").setLevel(Level.ERROR)
 

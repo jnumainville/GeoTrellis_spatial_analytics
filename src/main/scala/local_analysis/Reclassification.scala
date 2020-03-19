@@ -53,7 +53,7 @@ import org.apache.log4j.{Level, Logger}
 import org.apache.hadoop.fs.Path
 
 // config
-import collection.JavaConversions._
+import collection.JavaConverters._
 import com.typesafe.config.{Config, ConfigFactory}
 
 
@@ -132,12 +132,7 @@ object Reclassification{
     Entry point for reclassification
 
     Input:
-      args = In order:
-        dataName = name of the raster
-        dataFile = name of file where the raster is
-        dataPixelVal = the current pixel value
-        dataNewPixel = the new pixel value
-        outCSVPath = where to output the CSV
+      None
 
     Output:
       None
@@ -145,12 +140,12 @@ object Reclassification{
 
     val config: Config = ConfigFactory.load("datasets.conf")
 
-    val dataName = args(1)
-    val dataFile = args(2)
-    val dataPixelVal = args(3).toInt
-    val dataNewPixel = args(4).toInt
-    val tilesizes = Array(25, 50)
-    val outCSVPath = config.getString("reclassification.outCSVPath")
+    val dataName = config.getStringList("Reclassification.dataName").asScala.toList
+    val dataFile = config.getStringList("Reclassification.dataFile").asScala.toList
+    val dataPixelVal = config.getIntList("Reclassification.dataPixelVal").asScala.toList
+    val dataNewPixel = config.getIntList("Reclassification.dataNewPixel").asScala.toList
+    val tilesizes = config.getIntList("Reclassification.tilesizes").asScala.toList
+    val outCSVPath = config.getString("Reclassification.outCSVPath")
 
     Logger.getLogger("org.apache.spark").setLevel(Level.ERROR)
     val rasterDatasets = for {

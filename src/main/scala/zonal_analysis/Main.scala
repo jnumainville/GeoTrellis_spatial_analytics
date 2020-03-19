@@ -56,7 +56,7 @@ import scala.collection.mutable.ListBuffer
 import org.apache.log4j.{Level, Logger}
 
 // config
-import collection.JavaConversions._
+import collection.JavaConverters._
 import com.typesafe.config.{Config, ConfigFactory}
 
 object Main {
@@ -66,15 +66,7 @@ object Main {
     Entry point for the zonal analysis
 
     Input:
-      args = In order:
-        dataName = name of the raster
-        dataFile = name of file where the raster is
-        dataPixelVal = the current pixel value
-        dataNewPixel = the new pixel value
-        vectorName = the name of the vector
-        vectorFile = name of file where the vector is
-
-        outCSVPath = where to output the CSV
+      None
 
     Output:
       None
@@ -82,18 +74,18 @@ object Main {
 
     val config: Config = ConfigFactory.load("datasets.conf")
 
-    val dataName = args(1)
-    val dataFile = args(2)
-    val dataPixelVal = args(3).toInt
-    val dataNewPixel = args(4).toInt
+    val dataName = config.getStringList("Main.dataName").asScala.toList
+    val dataFile = config.getStringList("Main.dataFile").asScala.toList
+    val dataPixelVal = config.getIntList("Main.dataPixelVal").asScala.toList
+    val dataNewPixel = config.getIntList("Main.dataNewPixel").asScala.toList
 
-    val vectorName = args(5)
-    val vectorFile = args(6)
-    val vectorJSON = args(7)
+    val vectorName = config.getStringList("Main.vectorName").asScala.toList
+    val vectorFile = config.getStringList("Main.vectorFile").asScala.toList
+    val vectorJSON = config.getStringList("Main.vectorJSON").asScala.toList
 
-    val tileSizes = Array(25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000)
+    val tileSizes = config.getIntList("Main.tilesizes").asScala.toList
 
-    val outCSVPath = config.getString("main.outCSVPath")
+    val outCSVPath = config.getString("Main.outCSVPath")
 
     Logger.getLogger("org.apache.spark").setLevel(Level.ERROR)
     //Raster Dataset Path
